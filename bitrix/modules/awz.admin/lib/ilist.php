@@ -4,6 +4,7 @@ namespace Awz\Admin;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Entity\Query;
 use Bitrix\Main\UI\PageNavigation;
+use Bitrix\Main\Grid\Options as GridOptions;
 
 Loc::loadMessages(__FILE__);
 
@@ -11,32 +12,34 @@ class IList
 {
 	protected Parameters $params;
 	protected array $filter = array();
-	public \CAdminUiSorting $sortOb;
+	public $sortOb;
 	public Query $userQuery;
 	public bool $excelMode = false;
 
-	public function __construct($params) {
+	public function __construct($params, $publicMode=false) {
 		
 		if(!isset($params["PRIMARY"])) {
 			$params["PRIMARY"] = "ID";
 		}
 		
 		if(!isset($params["LANG_CODE"])) {
-			$params["LANG_CODE"] = strtoupper(str_replace(array("Table","\\"),array("","_"),$params["ENTITY"]))."_LIST_";
-			if(substr($params["LANG_CODE"],0,1)=="_") $params["LANG_CODE"] = substr($params["LANG_CODE"],1);
+            $params["LANG_CODE"] = Helper::getLangCode($params["ENTITY"], 'list');
 		}
 		
 		if(!isset($params["TABLEID"])) $params["TABLEID"] = strtolower(str_replace("_LIST_","",$params["LANG_CODE"]));
 		
 		//сортировка по умолчанию
-		if(!isset($params["ORDER"])){
-			$this->sortOb = new \CAdminUiSorting($params["TABLEID"], $params["PRIMARY"], "desc");
-		}else{
-		    $keys = array_keys($params["ORDER"]);
-            $this->sortOb = new \CAdminUiSorting($params["TABLEID"], $keys[0], $params["ORDER"][$keys[0]]);
-        }
+        //if(!$publicMode){
+            if(!isset($params["ORDER"])){
+                $this->sortOb = new \CAdminUiSorting($params["TABLEID"], $params["PRIMARY"], "desc");
+            }else{
+                $keys = array_keys($params["ORDER"]);
+                $this->sortOb = new \CAdminUiSorting($params["TABLEID"], $keys[0], $params["ORDER"][$keys[0]]);
+            }
+        //}
 
         $this->params = new Parameters($params);
+        if($publicMode) $this->setPublicMode();
 
         //загрузка языковых сущности
         $entity = $this->getParam("ENTITY");
@@ -48,13 +51,19 @@ class IList
         $filter = $this->formatFilterFields($this->getParam('FIND', array()));
         $this->setParam('FIND', $filter);
 
-        $this->excelMode = ($_REQUEST["mode"] == "excel");
+        if(!$this->isPublicMode())
+            $this->excelMode = ($_REQUEST["mode"] == "excel");
 	}
 
 	public function formatFilterFields(array $params){
         $entity = $this->getParam("ENTITY");
         foreach($params as &$filterItem){
-            $obField = $entity::getEntity()->getField($filterItem['id']);
+            $filterRealId = $filterItem['id'];
+            if(substr($filterRealId,0,1)=='%') {
+                $filterRealId = substr($filterRealId,1);
+                $filterItem['filterable'] = '%';
+            }
+            $obField = $entity::getEntity()->getField($filterRealId);
             if(!$obField) continue;
             if(!isset($filterItem['name'])){
                 $filterItem['name'] = $obField->getTitle();
@@ -94,13 +103,20 @@ class IList
 
     public function getAdminList(){
         static $adminList;
-        if(!$adminList)
-            $adminList = new \CAdminUiList($this->getParam("TABLEID"), $this->getSortOb());
+        if(!$adminList){
+            if($this->isPublicMode()){
+                $adminList = new PublicList($this->getParam("TABLEID"), $this->getSortOb());
+            }else{
+                $adminList = new \CAdminUiList($this->getParam("TABLEID"), $this->getSortOb());
+            }
+        }
         return $adminList;
     }
 
 	public function getRowListAdmin($arRes){
-		$editFile = $this->getParam("FILE_EDIT").'?'.$this->getParam("PRIMARY").'='.$arRes[$this->getParam("PRIMARY")].'&amp;lang='.LANG;
+        //print_r($arRes);
+        //die();
+		$editFile = $this->getParam("FILE_EDIT").'?'.$this->getParam("PRIMARY").'='.$arRes[$this->getParam("PRIMARY")].'&lang='.LANG;
 		
 		$row =& $this->getAdminList()->AddRow($arRes[$this->getParam("PRIMARY")], $arRes);
 
@@ -158,20 +174,9 @@ class IList
 		
 		if($_REQUEST['action_target']=='selected')
 		{
-            $filter = $this->getFilter();
-            if($_REQUEST['del_filter'] == 'Y') $filter = array();
-
-            if($this->getParam('FILTER'))
-                $filter = array_merge($this->getParam('FILTER'), $filter);
-
-			$rsData = $entity::getList(
-				array(
-					'order' => $orderAr,
-					'select' => array($this->getParam("PRIMARY")),
-					'filter' => $filter
-				)
-			);
-			while($arRes = $rsData->Fetch())
+            $userQuery = $this->getUserQuery();
+            $result = $userQuery->exec();
+			while($arRes = $result->fetch())
 			  $arID[] = $arRes[$this->getParam("PRIMARY")];
 		}
 		return $arID;
@@ -187,9 +192,8 @@ class IList
 		if($_REQUEST['action']=="delete") {
 			foreach($arID as $ID)
 			{
-				if(strlen($ID)<=0)
+				if(!$ID)
 					continue;
-					$ID = IntVal($ID);
 				
 				if(isset($act[$_REQUEST['action']])){
 					call_user_func($act[$_REQUEST['action']], $ID);
@@ -228,8 +232,6 @@ class IList
 			{
 				if(!$this->getAdminList()->IsUpdated($ID))
 				continue;
-
-				$ID = IntVal($ID);
 				
 				$entity = $this->getParam("ENTITY");
 				
@@ -264,6 +266,7 @@ class IList
         $this->userQuery = new Query($entity::getEntity());
 
         $colsVisible = ($totalCountRequest ? [] : $this->getAdminList()->getVisibleHeaderColumns());
+        //echo'<pre>';print_r($colsVisible);echo'</pre>';
         if (!in_array($this->getParam('PRIMARY'), $colsVisible))
             $colsVisible[] = $this->getParam('PRIMARY');
         $this->userQuery->setSelect($colsVisible);
@@ -284,7 +287,7 @@ class IList
             $this->userQuery->countTotal(true);
         }
 
-        $nav = $this->getAdminList()->getPageNavigation("pages-user-admin");
+        $nav = $this->getAdminList()->getPageNavigation($this->getParam('TABLEID'));
 
         if ($nav instanceof PageNavigation)
         {
@@ -469,13 +472,26 @@ class IList
             }
 			$this->getRowListAdmin($arRes);
 		}
-        $nav = $this->getAdminList()->getPageNavigation("pages-user-admin");
+        $nav = $this->getAdminList()->getPageNavigation($this->getParam('TABLEID'));
         $nav->setRecordCount($nav->getOffset() + $n);
         $this->getAdminList()->setNavigation($nav, Loc::getMessage($this->getParam("LANG_CODE")."NAV_TEXT"), false);
 
 	}
+
+	public function setPublicMode(){
+        $this->setParam('PUBLIC_MODE', 'Y');
+    }
+	public function isPublicMode(){
+	    return $this->getParam('PUBLIC_MODE', 'N') === 'Y';
+    }
+    public function defaultPublicInterface(){
+
+
+    }
 	
 	public function defaultInterface(){
+
+	    if($this->isPublicMode()) return $this->defaultPublicInterface();
 
         global $APPLICATION, $adminPage, $USER, $adminMenu, $adminChain, $POST_RIGHT;
         global $by, $order;

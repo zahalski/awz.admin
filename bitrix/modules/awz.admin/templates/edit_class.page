@@ -1,0 +1,47 @@
+<?php
+
+namespace #NAME_SPACE#;
+
+use Awz\Admin\Helper;
+use Bitrix\Main\Localization\Loc;
+use Awz\Admin\IForm;
+use Awz\Admin\IParams;
+
+Loc::loadMessages(__FILE__);
+
+class #CLASS_NAME# extends IForm implements IParams {
+
+    public function __construct($params){
+        parent::__construct($params);
+    }
+
+    public function trigerCheckActionAdd($func){
+        return $func;
+    }
+
+    public function trigerCheckActionUpdate($func){
+        return $func;
+    }
+
+    public static function getTitle(): string
+    {
+        return Loc::getMessage('#TITLE#');
+    }
+
+    public static function getParams(): array
+    {
+        $arParams = array(
+            "ENTITY" => "#ENTITY#",
+            "BUTTON_CONTEXTS"=>array('btn_list'=>false),
+            "LIST_URL"=>'/bitrix/admin/',
+            "TABS"=>array(
+                "edit1" => array(
+                    "NAME"=>Loc::getMessage('#EDIT1#'),
+                    "FIELDS" => array(
+                    )
+                )
+            )
+        );
+        return $arParams;
+    }
+}

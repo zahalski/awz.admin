@@ -2,16 +2,27 @@
 
 namespace Awz\Admin\Dict;
 
+/**
+ * Реализация параметров в классе
+ */
 abstract class Parameters {
 
+    /**
+     * @var array
+     */
     protected $params = array();
 
+    /**
+     * @param array $params
+     */
     public function __construct(array $params = array())
     {
         $this->setParameters($params);
     }
 
-    /**
+    /** Установка параметров
+     * массив string=>mixed
+     *
      * @param string $name
      * @param mixed $value
      * @return $this
@@ -27,6 +38,8 @@ abstract class Parameters {
     }
 
     /**
+     * Set parameter from code
+     *
      * @param string $name
      * @param mixed $value
      * @return $this
@@ -38,6 +51,8 @@ abstract class Parameters {
     }
 
     /**
+     * Get parameter from code
+     *
      * @param string $name
      * @param mixed|null $default
      * @return mixed|null
@@ -48,11 +63,27 @@ abstract class Parameters {
         return $default;
     }
 
+    /**
+     * Get parameter from code
+     * alias getParameter
+     *
+     * @param string $name
+     * @param $default
+     * @return mixed|null
+     */
     public function getParam(string $name, $default=null)
     {
         return $this->getParameter($name, $default);
     }
 
+    /**
+     * Set parameter from code
+     * alias setParameter
+     *
+     * @param string $name
+     * @param $value
+     * @return $this
+     */
     public function setParam(string $name, $value)
     {
         return $this->setParameter($name, $value);

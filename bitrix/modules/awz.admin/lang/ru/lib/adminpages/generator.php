@@ -1,0 +1,5 @@
+<?php
+$MESS['AWZ_ADMIN_ADMINPAGES_GENERATOR_TITLE'] = 'Генератор страницы';
+$MESS['AWZ_ADMIN_ADMINPAGES_GENERATOR_EDIT1'] = 'Выбор сущности';
+$MESS['AWZ_ADMIN_ADMINPAGES_GENERATOR_ENTITY'] = 'Файл с extends DataManager';
+$MESS['AWZ_ADMIN_ADMINPAGES_GENERATOR_ENTITY_DESC'] = 'Предпросмотр генерации';

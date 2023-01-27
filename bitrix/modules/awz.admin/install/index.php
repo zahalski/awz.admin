@@ -35,18 +35,113 @@ class awz_admin extends CModule
 		return true;
 	}
 
-	function DoInstall()
-	{
-		RegisterModule($this->MODULE_ID);
-	}
+    function DoInstall()
+    {
+        global $APPLICATION, $step;
 
-	function DoUninstall()
-	{
-		UnRegisterModule($this->MODULE_ID);
-	}
-	
-	function InstallDB() {
-		return true;
-	}
+        $this->InstallFiles();
+        $this->InstallDB();
+        $this->checkOldInstallTables();
+        $this->InstallEvents();
+        $this->createAgents();
 
+        ModuleManager::RegisterModule($this->MODULE_ID);
+
+        return true;
+    }
+
+    function DoUninstall()
+    {
+        global $APPLICATION, $step;
+
+        $step = intval($step);
+        if($step < 2) { //выводим предупреждение
+            $APPLICATION->IncludeAdminFile(Loc::getMessage('AWZ_ADMIN_INSTALL_TITLE'), $_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/'. $this->MODULE_ID .'/install/unstep.php');
+        }
+        elseif($step == 2) {
+            //проверяем условие
+            if($_REQUEST['save'] != 'Y' && !isset($_REQUEST['save'])) {
+                $this->UnInstallDB();
+            }
+            $this->UnInstallFiles();
+            $this->UnInstallEvents();
+            $this->deleteAgents();
+
+            ModuleManager::UnRegisterModule($this->MODULE_ID);
+
+            return true;
+        }
+    }
+
+    function InstallDB()
+    {
+        global $DB, $DBType, $APPLICATION;
+        $this->errors = false;
+        $this->errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT'] . "/bitrix/modules/". $this->MODULE_ID ."/install/db/".mb_strtolower($DB->type)."/install.sql");
+        if (!$this->errors) {
+            return true;
+        } else {
+            $APPLICATION->ThrowException(implode("", $this->errors));
+            return $this->errors;
+        }
+        return true;
+    }
+
+    function UnInstallDB()
+    {
+        global $DB, $DBType, $APPLICATION;
+
+        $this->errors = false;
+        $this->errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT'] . "/bitrix/modules/". $this->MODULE_ID ."/install/db/".mb_strtolower($DB->type)."/uninstall.sql");
+        if (!$this->errors) {
+            return true;
+        }
+        else {
+            $APPLICATION->ThrowException(implode("", $this->errors));
+            return $this->errors;
+        }
+    }
+
+    function InstallEvents()
+    {
+        return true;
+    }
+
+    function UnInstallEvents()
+    {
+        return true;
+    }
+
+    function InstallFiles()
+    {
+        CopyDirFiles($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/".$this->MODULE_ID."/install/admin/", $_SERVER['DOCUMENT_ROOT']."/bitrix/admin/", true);
+        CopyDirFiles($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/".$this->MODULE_ID."/install/components/awz/public.ui.filter/", $_SERVER['DOCUMENT_ROOT']."/bitrix/components/awz/public.ui.filter", true, true);
+        CopyDirFiles($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/".$this->MODULE_ID."/install/components/awz/public.ui.grid/", $_SERVER['DOCUMENT_ROOT']."/bitrix/components/awz/public.ui.grid", true, true);
+        return true;
+    }
+
+    function UnInstallFiles()
+    {
+        DeleteDirFilesEx("/bitrix/components/awz/public.ui.filter");
+        DeleteDirFilesEx("/bitrix/components/awz/public.ui.grid");
+        DeleteDirFiles(
+            $_SERVER['DOCUMENT_ROOT']."/bitrix/modules/".$this->MODULE_ID."/install/admin",
+            $_SERVER['DOCUMENT_ROOT']."/bitrix/admin"
+        );
+        return true;
+    }
+
+    function createAgents() {
+        return true;
+    }
+
+    function deleteAgents() {
+        return true;
+    }
+
+    function checkOldInstallTables(){
+
+        return true;
+
+    }
 }
