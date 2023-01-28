@@ -87,6 +87,13 @@ class IList
                 if(!isset($filterItem['type'])){
                     $filterItem['type'] = 'date';
                 }
+            }elseif($obField instanceof \Bitrix\Main\ORM\Fields\DateField){
+                if(!isset($filterItem['filterable'])){
+                    $filterItem['filterable'] = '';
+                }
+                if(!isset($filterItem['type'])){
+                    $filterItem['type'] = 'date';
+                }
             }
         }
         unset($filterItem);
