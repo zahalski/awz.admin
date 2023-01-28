@@ -58,7 +58,8 @@ class IList
 	public function formatFilterFields(array $params){
         $entity = $this->getParam("ENTITY");
         foreach($params as &$filterItem){
-            $filterRealId = $filterItem['id'];
+            $filterRealIdAr = \Bitrix\Main\UI\Filter\Options::getRowsFromFields([$filterItem['id']=>true]);
+            $filterRealId = $filterRealIdAr[0];
             if(substr($filterRealId,0,1)=='%') {
                 $filterRealId = substr($filterRealId,1);
                 $filterItem['filterable'] = '%';

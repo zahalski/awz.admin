@@ -30,6 +30,9 @@ class SmartTable extends ORM\Data\DataManager
         //echo'<pre>';print_r(self::$fields);echo'</pre>';
         foreach(self::$fields as $key=>$field){
             $fieldOrm = null;
+            if($field['isMultiple']){
+                continue;
+            }
             if($field['type'] == 'integer'){
                 $fieldOrm = (new ORM\Fields\IntegerField($key, array(
                         'title' => $field['title']
@@ -63,20 +66,32 @@ class SmartTable extends ORM\Data\DataManager
                     )
                 ));
             }
-            /*if($field['type'] == 'boolean'){
+            if($field['type'] == 'boolean'){
                 $fieldOrm = (new ORM\Fields\BooleanField($key, array(
                         'title' => $field['title']
                     )
                 ));
-            }*/
+            }
             if($field['type'] == 'date'){
                 $fieldOrm = (new ORM\Fields\DateField($key, array(
                         'title' => $field['title']
                     )
                 ));
             }
+            if($field['type'] == 'user'){
+                $fieldOrm = (new ORM\Fields\IntegerField($key, array(
+                        'title' => $field['title']
+                    )
+                ));
+            }
+            if($field['type'] == 'double'){
+                $fieldOrm = (new ORM\Fields\FloatField($key, array(
+                        'title' => $field['title']
+                    )
+                ));
+            }
             if($fieldOrm && $field['isRequired']){
-                $fieldOrm->isRequired();
+                $fieldOrm->configureRequired();
             }
             if($fieldOrm){
                 $fields[$key] = $fieldOrm;

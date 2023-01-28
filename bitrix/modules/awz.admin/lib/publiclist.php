@@ -606,9 +606,9 @@ class PublicList extends \CAdminUiList
             "FILTER" => $findParams,
             "FILTER_PRESETS" => $filterSett->getPresets(),
             "ENABLE_LABEL" => true,
-            "ENABLE_LIVE_SEARCH" => false,
-            "ENABLE_FIELDS_SEARCH"=>true,
-            //"ENABLE_ADDITIONAL_FILTERS"=>true
+            "ENABLE_LIVE_SEARCH"=>false,
+            //"ENABLE_FIELDS_SEARCH"=>'Y',
+            "ENABLE_ADDITIONAL_FILTERS"=>true
         );
 
         global $APPLICATION;
