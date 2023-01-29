@@ -396,10 +396,10 @@ class IList
 
 	}
 	
-	public function AddAdminContextMenu(){
+	public function AddAdminContextMenu($bShowExcel=true, $bShowSettings=true){
 		
 		if(is_array($this->getParam("BUTTON_CONTEXTS"))){
-            $this->getAdminList()->AddAdminContextMenu($this->getParam("BUTTON_CONTEXTS"));
+            $this->getAdminList()->AddAdminContextMenu($this->getParam("BUTTON_CONTEXTS"), $bShowExcel, $bShowSettings);
         }elseif ($this->getParam("BUTTON_CONTEXTS", false) !== false) {
 			$arContext['add'] = array(
 				'TEXT' => Loc::getMessage("AWZ_ADMIN_LIST_BUTTON_CONTEXTS_BTN_NEW"),

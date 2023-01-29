@@ -34,6 +34,7 @@ class PublicList extends \CAdminUiList
     public $aActions;
     public $arActions;
     public $arActionsParams;
+    public array $contextMenu = [];
 
     //public $aRows;
 
@@ -221,6 +222,7 @@ class PublicList extends \CAdminUiList
             $gridParameters["SHOW_SELECTED_COUNTER"] = false;
             $gridParameters["SHOW_ACTION_PANEL"] = false;
         }
+        //$gridParameters["SHOW_CHECK_ALL_CHECKBOXES"] = true;
 
         if (isset($arParams["SHOW_TOTAL_COUNTER"]))
         {
@@ -475,6 +477,7 @@ class PublicList extends \CAdminUiList
             $gridParameters["COLUMNS"][] = $header;
         }
 
+
         $APPLICATION->includeComponent(
             "awz:public.ui.grid",
             "",
@@ -595,6 +598,24 @@ class PublicList extends \CAdminUiList
 
     }
 
+    public function AddAdminContextMenu($aContext=array(), $bShowExcel=true, $bShowSettings=true){
+        if(isset($aContext[0])){
+            foreach($aContext as $contecstRow){
+                $this->contextMenu[] = new \CAdminUiContextMenu($contecstRow);
+            }
+        }else{
+            $this->contextMenu[] = new \CAdminUiContextMenu($aContext);
+        }
+    }
+
+    public function ShowContext(){
+        if(!empty($this->contextMenu)){
+            foreach($this->contextMenu as $menu){
+                $menu->show();
+            }
+        }
+    }
+
     public function DisplayFilter(array $findParams = array()){
 
         $filterSett = new FilterOptions($this->table_id);
@@ -613,10 +634,24 @@ class PublicList extends \CAdminUiList
 
         global $APPLICATION;
         \Bitrix\Main\UI\Extension::load('ui.fonts.opensans');
-        $APPLICATION->SetAdditionalCSS('/bitrix/css/main/grid/webform-button.css');
+        $assets = \Bitrix\Main\Page\Asset::getInstance();
+        $assets->addJs('/bitrix/js/main/core/core_admin_interface.js');
+        $assets->addCss('/bitrix/css/main/grid/webform-button.css');
+
+        $assets->addCss('/bitrix/js/main/popup/dist/main.popup.bundle.css');
+        $assets->addCss('/bitrix/panel/main/popup.css');
+        $assets->addCss('/bitrix/panel/main/admin-public.css');
+        $assets->addCss('/bitrix/components/bitrix/ui.toolbar/templates/.default/style.css');
+
+        \CJSCore::init(['popup']);
+        //\Bitrix\Main\Loader::includeModule('ui');
+        //$APPLICATION->IncludeComponent('bitrix:ui.toolbar', '', []);
+        //\Bitrix\UI\Toolbar\Facade\Toolbar::addFilter($params);
+
         ?>
-        <div class="adm-toolbar-panel-container">
-            <div class="adm-toolbar-panel-flexible-space">
+        <div id="bx-admin-prefix" class="ui-toolbar">
+        <div id="uiToolbarContainer" class="ui-toolbar">
+                <div class="ui-toolbar-filter-box">
                 <?
                 $APPLICATION->includeComponent(
                     "awz:public.ui.filter",
@@ -626,10 +661,12 @@ class PublicList extends \CAdminUiList
                     array("HIDE_ICONS" => true)
                 );
                 ?>
-            </div>
-            <?
-            //$this->ShowContext();
-            ?>
+                </div>
+                <?
+                $this->ShowContext();
+                ?>
+
+        </div>
         </div>
         <?
     }
