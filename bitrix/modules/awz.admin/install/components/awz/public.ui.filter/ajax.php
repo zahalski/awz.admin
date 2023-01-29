@@ -11,6 +11,12 @@ if(!Loader::includeModule('awz.admin')){
     return;
 }
 
+$tracker = null;
+if(Loader::includeModule('awz.bxapistats')){
+    $tracker = \Awz\BxApiStats\Tracker::getInstance();
+    $tracker->addCount();
+}
+
 class AwzPublicUIFilterAjaxController extends \Bitrix\Main\Engine\Controller
 {
 	protected function getDefaultPreFilters()

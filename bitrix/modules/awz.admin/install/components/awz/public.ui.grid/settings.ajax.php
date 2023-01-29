@@ -15,6 +15,14 @@ if(!Loader::includeModule('awz.admin')){
     return;
 }
 
+
+$tracker = null;
+if(Loader::includeModule('awz.bxapistats')){
+    $tracker = \Awz\BxApiStats\Tracker::getInstance();
+    $tracker->addCount();
+}
+
+
 $response = new \Bitrix\Main\HttpResponse();
 $response->addHeader("Content-Type", "application/json");
 

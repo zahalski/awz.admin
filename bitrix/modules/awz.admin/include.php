@@ -29,6 +29,13 @@ class awzAdminHandlers {
                         $authData['app'] = $keyAr[3];
                         $authData['domain'] = $keyAr[1];
                         $authData['user'] = $keyAr[2];
+
+                        if(\Bitrix\Main\Loader::includeModule('awz.bxapistats')){
+                            $tracker = \Awz\BxApiStats\Tracker::getInstance();
+                            $tracker->setPortal($authData['domain']);
+                            $tracker->setAppId($authData['app']);
+                        }
+
                     }
                 }
             }

@@ -36,6 +36,9 @@ class PublicList extends \CAdminUiList
     public $arActionsParams;
     public array $contextMenu = [];
 
+    public $bottomContent = [];
+    public $topContent = [];
+
     //public $aRows;
 
     public function __construct($table_id, $sort){
@@ -43,6 +46,13 @@ class PublicList extends \CAdminUiList
         $this->table_id = $table_id;
         $this->sort = $sort;
 
+    }
+
+    public function addBottom($html){
+        $this->bottomContent[] = $html;
+    }
+    public function addTop($html){
+        $this->topContent[] = $html;
     }
 
     public function getHeaders(){
@@ -173,24 +183,31 @@ class PublicList extends \CAdminUiList
         foreach ($this->arFilterErrors as $error)
         {
             $errorMessages[] = [
-                'TYPE' => Bitrix\Main\Grid\MessageType::ERROR,
+                'TYPE' => \Bitrix\Main\Grid\MessageType::ERROR,
                 'TEXT' => $error,
             ];
         }
         foreach ($this->arUpdateErrors as $arError)
         {
             $errorMessages[] = [
-                'TYPE' => Bitrix\Main\Grid\MessageType::ERROR,
+                'TYPE' => \Bitrix\Main\Grid\MessageType::ERROR,
                 'TEXT' => $arError[0],
             ];
         }
         foreach ($this->arGroupErrors as $arError)
         {
             $errorMessages[] = [
-                'TYPE' => Bitrix\Main\Grid\MessageType::ERROR,
+                'TYPE' => \Bitrix\Main\Grid\MessageType::ERROR,
                 'TEXT' => $arError[0],
             ];
         }
+
+        /*$errorMessages[] = [
+            'TYPE' => \Bitrix\Main\Grid\MessageType::INFO,
+            'TEXT' => 'test',
+        ];*/
+
+        //echo implode('',$this->topContent);
 
         global $APPLICATION;
         \Bitrix\Main\UI\Extension::load('ui.fonts.opensans');
@@ -477,6 +494,13 @@ class PublicList extends \CAdminUiList
             $gridParameters["COLUMNS"][] = $header;
         }
 
+        /*if(!empty($this->bottomContent)){
+            $gridParameters['MESSAGES'] = [
+                    [
+                            'TEXT'=>$this->bottomContent[0]
+                    ]
+            ];
+        }*/
 
         $APPLICATION->includeComponent(
             "awz:public.ui.grid",
@@ -484,6 +508,8 @@ class PublicList extends \CAdminUiList
             $gridParameters,
             false, array("HIDE_ICONS" => "Y")
         );
+
+        //echo implode('',$this->bottomContent);
 
     }
 
@@ -669,6 +695,7 @@ class PublicList extends \CAdminUiList
         </div>
         </div>
         <?
+
     }
 
 }
