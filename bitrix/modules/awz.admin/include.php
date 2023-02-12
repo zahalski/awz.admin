@@ -21,14 +21,19 @@ class awzAdminHandlers {
         $request = \Bitrix\Main\Application::getInstance()->getContext()->getRequest();
         if($key = $request->get('key')){
             $keyAr = explode("|",$key);
-            if(count($keyAr)==5 && \Bitrix\Main\Loader::includeModule('awz.bxapi')){
+            $startCount  = count($keyAr);
+            if($startCount>=5 && \Bitrix\Main\Loader::includeModule('awz.bxapi')){
                 $secret = \Awz\BxApi\Helper::getSecret($keyAr[3]);
                 if($secret){
-                    $hash = hash_hmac('sha256', implode("|",array($keyAr[0], $keyAr[1], $keyAr[2], $keyAr[3])), $secret);
-                    if($hash == $keyAr[4]){
+                    $hashPrepare = array_pop($keyAr);
+                    $hash = hash_hmac('sha256', implode("|",$keyAr), $secret);
+                    if($hash == $hashPrepare){
                         $authData['app'] = $keyAr[3];
                         $authData['domain'] = $keyAr[1];
                         $authData['user'] = $keyAr[2];
+                        if(count($keyAr)==5){
+                            //$authData['group'] = $keyAr[4];
+                        }
 
                         if(\Bitrix\Main\Loader::includeModule('awz.bxapistats')){
                             $tracker = \Awz\BxApiStats\Tracker::getInstance();

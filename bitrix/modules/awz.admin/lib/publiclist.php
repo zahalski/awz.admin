@@ -501,7 +501,8 @@ class PublicList extends \CAdminUiList
                     ]
             ];
         }*/
-
+        //echo'<pre>';print_r($gridParameters);echo'</pre>';
+        //die();
         $APPLICATION->includeComponent(
             "awz:public.ui.grid",
             "",
@@ -515,6 +516,7 @@ class PublicList extends \CAdminUiList
 
     private function GetGroupAction()
     {
+        if(empty($this->arActions)) return [];
         $actionPanelConstructor = new \CAdminUiListActionPanel(
             $this->table_id, $this->arActions, $this->arActionsParams);
 

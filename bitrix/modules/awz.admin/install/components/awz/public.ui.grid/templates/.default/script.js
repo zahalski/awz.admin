@@ -5739,7 +5739,7 @@
 	    }
 	  };
 
-	  BX.Grid.RowsSortable = function (parent) {
+	  BX.Grid.RowsSortableRowsSortable = function (parent) {
 	    this.parent = null;
 	    this.list = null;
 	    this.setDefaultProps();

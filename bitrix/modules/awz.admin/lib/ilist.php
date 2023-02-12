@@ -58,7 +58,12 @@ class IList
 	public function formatFilterFields(array $params){
         $entity = $this->getParam("ENTITY");
         foreach($params as &$filterItem){
-            $filterRealIdAr = \Bitrix\Main\UI\Filter\Options::getRowsFromFields([$filterItem['id']=>true]);
+            if(isset($filterItem['realId'])){
+                $filterRealId = $filterItem['realId'];
+            }else{
+                $filterRealId = $filterItem['id'];
+            }
+            $filterRealIdAr = \Bitrix\Main\UI\Filter\Options::getRowsFromFields([$filterRealId=>true]);
             $filterRealId = $filterRealIdAr[0];
             if(substr($filterRealId,0,1)=='%') {
                 $filterRealId = substr($filterRealId,1);
@@ -381,10 +386,14 @@ class IList
 					$setCol = true;
 				}
 				if($setCol){
+                    $sort = $name;
+                    if($col->hasParameter('sortable')){
+                        $sort = $col->getParameter('sortable');
+                    }
 					$colHeaders[] = array(
 						"id" => $name,
 						"content" => $col->getTitle(),
-						"sort" => $name,
+						"sort" => $sort,
 						"default" => true,
 					);
 				}
