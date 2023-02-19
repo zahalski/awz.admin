@@ -175,6 +175,32 @@ class Helper {
         }
     }
 
+    public static function editListField(&$row, $fieldCode, $fieldData=[], $ob=null){
+        if($fieldData['type']=='string'){
+            $row->AddInputField($fieldCode, []);
+        }elseif($fieldData['type']=='checkbox'){
+            $row->AddCheckField($fieldCode, $fieldData);
+        }elseif($fieldData['type'] == 'date'){
+            $row->AddCalendarField($fieldCode, array());
+        }elseif($fieldData['type'] == 'datetime'){
+            $row->AddCalendarField($fieldCode, array(), true);
+        }
+    }
+
+    public static function viewListField(&$row, $fieldCode, $fieldData=[], $ob=null){
+        if($fieldData['type']=='entity_link'){
+            $primaryCode = $ob->getParam('PRIMARY', 'ID');
+            $url = $ob->getParam("FILE_EDIT");
+            if(mb_strpos($url, '?')!==false){
+                $url .= '&';
+            }else{
+                $url .= '?';
+            }
+            $url .= 'lang='.LANG.'&'.$primaryCode.'='.$row->arRes[$primaryCode];
+            $row->AddViewField($fieldCode, '<a href="'.$url.'">'.$row->arRes[$fieldCode].'</a>');
+        }
+    }
+
     public static function formatListField($fieldData, $fieldCode, &$row, $ob=null){
         if($fieldData['type'] == 'datetime'){
             if(strtotime($row->arRes[$fieldCode])){

@@ -5,6 +5,7 @@ namespace #NAME_SPACE#;
 use Bitrix\Main\Localization\Loc;
 use Awz\Admin\IList;
 use Awz\Admin\IParams;
+use Awz\Admin\Helper;
 
 Loc::loadMessages(__FILE__);
 

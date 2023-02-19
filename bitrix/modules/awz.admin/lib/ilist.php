@@ -48,12 +48,39 @@ class IList
                 Loc::loadMessages($entity::getFilePath());
         }
 
+        $this->formatFilterFromEntity();
+
         $filter = $this->formatFilterFields($this->getParam('FIND', array()));
         $this->setParam('FIND', $filter);
 
         if(!$this->isPublicMode())
             $this->excelMode = ($_REQUEST["mode"] == "excel");
 	}
+
+	public function formatFilterFromEntity(){
+        $curParamsFilter = $this->getParam('FIND', []);
+        $codes = $this->getParam('FIND_FROM_ENTITY');
+        if(is_array($codes) && !empty($codes)){
+            $entity = $this->getParam("ENTITY");
+            if(!class_exists($entity)) return;
+            $entityOb = $entity::getEntity();
+            if(!$entityOb instanceof \Bitrix\Main\ORM\Entity) return;
+            foreach($codes as $code=>$options){
+                $obField = $entityOb->getField($code);
+                if($obField instanceof \Bitrix\Main\ORM\Fields\Field){
+                    $filterTitle = $obField->getTitle();
+                    $filterId = $obField->getColumnName();
+                    $newFilterRow = Helper::formatFilter($filterTitle, $filterId, $obField, $options);
+                    if(!empty($newFilterRow)){
+                        $curParamsFilter[] = $newFilterRow;
+                    }
+                }
+            }
+        }
+        if(!empty($curParamsFilter)){
+            $this->setParam('FIND',$curParamsFilter);
+        }
+    }
 
 	public function formatFilterFields(array $params){
         $entity = $this->getParam("ENTITY");
