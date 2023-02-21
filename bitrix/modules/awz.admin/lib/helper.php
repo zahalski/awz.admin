@@ -202,6 +202,8 @@ class Helper {
     }
 
     public static function formatListField($fieldData, $fieldCode, &$row, $ob=null){
+        static $enumValues = [];
+
         if($fieldData['type'] == 'datetime'){
             if(strtotime($row->arRes[$fieldCode])){
                 $row->arRes[$fieldCode] = \Bitrix\Main\Type\DateTime::createFromTimestamp(strtotime($row->arRes[$fieldCode]));
@@ -221,7 +223,11 @@ class Helper {
             if($ob instanceof \TaskList) {
                 $codeEnt = 'task';
             }
-            $row->AddViewField($fieldCode, '<a class="open-smart" data-ent="'.$codeEnt.'" data-id="'.$row->arRes['id'].'" href="#">' . $row->arRes[$fieldCode] . '</a>');
+            if(isset($fieldData['noLink']) && $fieldData['noLink']){
+                $row->AddViewField($fieldCode, $row->arRes[$fieldCode]);
+            }else{
+                $row->AddViewField($fieldCode, '<a class="open-smart" data-ent="'.$codeEnt.'" data-id="'.$row->arRes['id'].'" href="#">' . $row->arRes[$fieldCode] . '</a>');
+            }
             if(!$fieldData['isReadOnly']){
                 $row->AddInputField($fieldCode, array("size"=>$fieldData['settings']['SIZE']));
             }
@@ -239,16 +245,46 @@ class Helper {
             if($ob instanceof \TaskList) {
                 $codeEnt = 'task';
             }
-            $row->AddViewField($fieldCode, $addHtml.'<a class="open-smart" data-ent="'.$codeEnt.'" data-id="'.$row->arRes['id'].'" href="#">'.$row->arRes[$fieldCode].'</a>');
+            if(isset($fieldData['noLink']) && $fieldData['noLink']){
+                $row->AddViewField($fieldCode, $addHtml.$row->arRes[$fieldCode]);
+            }else{
+                $row->AddViewField($fieldCode, $addHtml.'<a class="open-smart" data-ent="'.$codeEnt.'" data-id="'.$row->arRes['id'].'" href="#">'.$row->arRes[$fieldCode].'</a>');
+            }
         }else{
             if($fieldData['type'] == 'string'){
                 if(!$fieldData['isReadOnly']) {
                     $row->AddInputField($fieldCode, array("size" => $fieldData['settings']['SIZE']));
+                }else{
+                    $row->AddViewField($fieldCode, $row->arRes[$fieldCode]);
                 }
             }
             if($fieldData['type'] == 'enum'){
+
                 if(!$fieldData['isReadOnly']) {
                     $row->AddSelectField($fieldCode, $fieldData['values'], array("size" => $fieldData['settings']['SIZE']));
+                }else{
+
+                    if(!isset($enumValues[$fieldCode])){
+                        $enumValues[$fieldCode] = [];
+                        foreach($fieldData['values'] as $key=>$item){
+                            if(!is_array($item)){
+                                $enumValues[$fieldCode][$key] = $item;
+                            }else{
+                                if($item['ID'] && $item['VALUE']){
+                                    $enumValues[$fieldCode][$item['ID']] = $item;
+                                }
+                            }
+                        }
+                    }
+
+                    if(isset($enumValues[$fieldCode][$row->arRes[$fieldCode]])){
+                        if(is_array($enumValues[$fieldCode][$row->arRes[$fieldCode]])){
+                            $row->AddViewField($fieldCode, $enumValues[$fieldCode][$row->arRes[$fieldCode]]['VALUE'] ?? $row->arRes[$fieldCode]);
+                        }else{
+                            $row->AddViewField($fieldCode, $enumValues[$fieldCode][$row->arRes[$fieldCode]] ?? $row->arRes[$fieldCode]);
+                        }
+                    }
+
                 }
             }
             if($fieldData['type'] == 'enumeration'){
@@ -259,34 +295,58 @@ class Helper {
             if($fieldData['type'] == 'double'){
                 if(!$fieldData['isReadOnly']) {
                     $row->AddInputField($fieldCode, array("size" => $fieldData['settings']['SIZE']));
+                }else{
+                    $row->AddViewField($fieldCode, $row->arRes[$fieldCode]);
                 }
             }
             if($fieldData['type'] == 'integer'){
                 if(!$fieldData['isReadOnly']) {
                     $row->AddInputField($fieldCode, array("size" => $fieldData['settings']['SIZE']));
+                }else{
+                    $row->AddViewField($fieldCode, $row->arRes[$fieldCode]);
                 }
             }
             if($fieldData['type'] == 'date'){
-                $row->AddCalendarField($fieldCode, array());
+                if(!$fieldData['isReadOnly']) {
+                    $row->AddCalendarField($fieldCode, array());
+                }else{
+                    $row->AddViewField($fieldCode, $row->arRes[$fieldCode]);
+                }
             }
             if($fieldData['type'] == 'datetime'){
-                $row->AddCalendarField($fieldCode, array(), true);
+                if(!$fieldData['isReadOnly']) {
+                    $row->AddCalendarField($fieldCode, array(), true);
+                }else{
+                    $row->AddViewField($fieldCode, $row->arRes[$fieldCode]);
+                }
             }
             if($fieldData['type'] == 'boolean'){
-                if(!isset($fieldData['settings'])){
-                    $row->AddCheckField($fieldCode);
-                }else{
-                    $label = $row->arRes[$fieldCode];
-                    if($label == 0) $label = ($fieldData['settings']['LABEL'][0]) ?? 'нет';
-                    if($label == 1) $label = ($fieldData['settings']['LABEL'][1]) ?? 'да';
-                    $row->AddViewField($fieldCode,$label);
-                    if(!$fieldData['isReadOnly']) {
-                        $row->AddEditField($fieldCode, '<label>' . $fieldData['settings']['LABEL_CHECKBOX'] . '</label><input type="checkbox" id="' . htmlspecialcharsbx($fieldCode) . '_control" name="' . htmlspecialcharsbx($fieldCode) . '" value="Y" ' . ($row->arRes[$fieldCode] == '1' || $row->arRes[$fieldCode] === true ? ' checked' : '') . '>');
+                if(!$fieldData['isReadOnly']) {
+                    if(!isset($fieldData['settings'])){
+                        $row->AddCheckField($fieldCode);
+                    }else{
+                        $label = $row->arRes[$fieldCode];
+                        if($label == 0) $label = ($fieldData['settings']['LABEL'][0]) ?? 'нет';
+                        if($label == 1) $label = ($fieldData['settings']['LABEL'][1]) ?? 'да';
+                        $row->AddViewField($fieldCode,$label);
+                        if(!$fieldData['isReadOnly']) {
+                            $row->AddEditField($fieldCode, '<label>' . $fieldData['settings']['LABEL_CHECKBOX'] . '</label><input type="checkbox" id="' . htmlspecialcharsbx($fieldCode) . '_control" name="' . htmlspecialcharsbx($fieldCode) . '" value="Y" ' . ($row->arRes[$fieldCode] == '1' || $row->arRes[$fieldCode] === true ? ' checked' : '') . '>');
+                        }
                     }
+                }else{
+                    $row->AddViewField($fieldCode, $row->arRes[$fieldCode]);
                 }
             }
             if($fieldData['type'] == 'url'){
-                $row->AddViewField($fieldCode, '<a target="_blank" href="'.$row->arRes[$fieldCode].'">'.$row->arRes[$fieldCode].'</a>');
+                $anchor = $row->arRes[$fieldCode];
+                if(isset($fieldData['fixValue'])){
+                    $anchor = $fieldData['fixValue'];
+                }
+                if(mb_strlen($anchor)>20){
+                    $anchor = str_replace(['https://','http://'],'',$anchor);
+                    $anchor = mb_substr($anchor,0,13).'...'.mb_substr($anchor,-5);
+                }
+                $row->AddViewField($fieldCode, '<a target="_blank" href="'.$row->arRes[$fieldCode].'">'.$anchor.'</a>');
                 if(!$fieldData['isReadOnly']) {
                     $row->AddInputField($fieldCode, array("size" => $fieldData['settings']['SIZE']));
                 }
@@ -307,7 +367,11 @@ class Helper {
                         //'CURRENCY_LIST'=>[$val[1] => $val[1]]
                     ]
                 ));*/
-                $row->AddInputField($fieldCode);
+                if(!$fieldData['isReadOnly']) {
+                    $row->AddInputField($fieldCode);
+                }else{
+                    $row->AddViewField($fieldCode, $row->arRes[$fieldCode]);
+                }
             }
 
             if($fieldData['type'] == 'user'){
@@ -330,7 +394,9 @@ class Helper {
                 $row->AddViewField($fieldCode, '<a class="open-smart" data-ent="user" data-id="'.$row->arRes[$fieldCode].'" href="#">'.$userName.'</a>');
             }
             if($fieldData['type'] == 'group'){
-                $row->AddInputField($fieldCode, array("size"=>$fieldData['settings']['SIZE']));
+                if(!$fieldData['isReadOnly']) {
+                    $row->AddInputField($fieldCode, array("size" => $fieldData['settings']['SIZE']));
+                }
                 if(intval($row->arRes[$fieldCode])){
                     $user = $ob->getGroup(intval($row->arRes[$fieldCode]));
                     $userName = '';

@@ -663,6 +663,7 @@ class PublicList extends \CAdminUiList
         global $APPLICATION;
         \Bitrix\Main\UI\Extension::load('ui.fonts.opensans');
         $assets = \Bitrix\Main\Page\Asset::getInstance();
+        $assets->addJs('/bitrix/js/main/core/core_window.js');
         $assets->addJs('/bitrix/js/main/core/core_admin_interface.js');
         $assets->addCss('/bitrix/css/main/grid/webform-button.css');
 
