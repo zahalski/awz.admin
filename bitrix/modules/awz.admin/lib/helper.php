@@ -384,28 +384,50 @@ class Helper {
                         </div>');*/
                     $row->AddInputField($fieldCode, array("size" => $fieldData['settings']['SIZE']));
                 }
-                $user = $ob->getUser(intval($row->arRes[$fieldCode]));
-                $userName = '';
-                if(!empty($user)){
-                    $userName = '['.intval($row->arRes[$fieldCode]).'] '.htmlspecialcharsbx($user['NAME']).' '.htmlspecialcharsbx($user['LAST_NAME']);
-                }else{
-                    $userName = $row->arRes[$fieldCode];
+                $userData = [];
+                if($fieldCode == 'createdBy'){
+                    $userData = $row->arRes['creator'];
+                }else if($fieldCode == 'responsibleId'){
+                    $userData = $row->arRes['responsible'];
                 }
-                $row->AddViewField($fieldCode, '<a class="open-smart" data-ent="user" data-id="'.$row->arRes[$fieldCode].'" href="#">'.$userName.'</a>');
+
+                if(!empty($userData) && is_array($userData)){
+                    $html = '<div class="tasks-grid-username-wrapper"><a class="tasks-grid-username open-smart" data-ent="user" data-id="'.$row->arRes[$fieldCode].'" href="#"><span class="tasks-grid-avatar ui-icon ui-icon-common-user"><i style="background-image: url(\''.$userData['icon'].'\')"></i></span><span class="tasks-grid-username-inner">'.$userData['name'].'</span><span class="tasks-grid-filter-remove"></span></a></div>';
+                    $row->AddViewField($fieldCode, $html);
+                }else{
+                    $user = $ob->getUser(intval($row->arRes[$fieldCode]));
+                    $userName = '';
+                    if(!empty($user)){
+                        $userName = '['.intval($row->arRes[$fieldCode]).'] '.htmlspecialcharsbx($user['NAME']).' '.htmlspecialcharsbx($user['LAST_NAME']);
+                    }else{
+                        $userName = $row->arRes[$fieldCode];
+                    }
+                    $row->AddViewField($fieldCode, '<a class="open-smart" data-ent="user" data-id="'.$row->arRes[$fieldCode].'" href="#">'.$userName.'</a>');
+                }
+
+
             }
             if($fieldData['type'] == 'group'){
                 if(!$fieldData['isReadOnly']) {
                     $row->AddInputField($fieldCode, array("size" => $fieldData['settings']['SIZE']));
                 }
                 if(intval($row->arRes[$fieldCode])){
-                    $user = $ob->getGroup(intval($row->arRes[$fieldCode]));
-                    $userName = '';
-                    if(!empty($user)){
-                        $userName = '['.intval($row->arRes[$fieldCode]).'] '.htmlspecialcharsbx($user['NAME']);
+
+                    $groupData = $row->arRes['group'];
+                    if(!empty($groupData) && is_array($groupData)){
+                        $html = '<a class="tasks-grid-group open-smart" data-ent="group" data-id="'.$row->arRes[$fieldCode].'" href="#"><span class="tasks-grid-avatar ui-icon ui-icon-common-user-group"><i style="background-image: url(\''.$groupData['image'].'\')"></i></span><span class="tasks-grid-group-inner">'.$groupData['name'].'</span><span class="tasks-grid-filter-remove"></span></a>';
+                        $row->AddViewField($fieldCode, $html);
                     }else{
-                        $userName = $row->arRes[$fieldCode];
+                        $user = $ob->getGroup(intval($row->arRes[$fieldCode]));
+                        $userName = '';
+                        if(!empty($user)){
+                            $userName = '['.intval($row->arRes[$fieldCode]).'] '.htmlspecialcharsbx($user['NAME']);
+                        }else{
+                            $userName = $row->arRes[$fieldCode];
+                        }
+                        $row->AddViewField($fieldCode, '<a class="open-smart" data-ent="group" data-id="'.$row->arRes[$fieldCode].'" href="#">'.$userName.'</a>');
                     }
-                    $row->AddViewField($fieldCode, '<a class="open-smart" data-ent="group" data-id="'.$row->arRes[$fieldCode].'" href="#">'.$userName.'</a>');
+
                 }else{
                     $row->AddViewField($fieldCode,'');
                 }
@@ -591,6 +613,10 @@ class Helper {
         //die();
         return $arDates;
 
+    }
+
+    public static function createCrmLink($entity){
+        return '<a class="open-smart" data-preloaded="0" data-ent="auto" data-id="'.$entity.'" href="#">'.$entity.'</a>';
     }
 
 }

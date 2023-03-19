@@ -16,6 +16,8 @@ class IList
 	public Query $userQuery;
 	public bool $excelMode = false;
 
+    public $navOb = null;
+
 	public function __construct($params, $publicMode=false) {
 		
 		if(!isset($params["PRIMARY"])) {
@@ -327,7 +329,29 @@ class IList
             $this->userQuery->countTotal(true);
         }
 
-        $nav = $this->getAdminList()->getPageNavigation($this->getParam('TABLEID'));
+        $editPageNum = 0;
+        if(
+            !empty($_REQUEST["action_button_".$this->getParam('TABLEID')]) &&
+            is_array($_POST["FIELDS"])
+        )
+        {
+            $session = \Bitrix\Main\Application::getInstance()->getSession();
+            $paginationData = $session['ADMIN_PAGINATION_DATA'][$this->getParam('TABLEID')];
+            if (isset($paginationData['PAGE_NUM']))
+            {
+                $editPageNum = (int)$paginationData['PAGE_NUM'];
+                $this->navOb = new PageNavigation($this->getParam('TABLEID'));
+                $this->navOb->setPageSize($this->getAdminList()->getNavSize());
+                $this->navOb->setCurrentPage($editPageNum);
+                $this->navOb->initFromUri();
+            }
+        }
+
+        if($this->navOb){
+            $nav = $this->navOb;
+        }else{
+            $nav = $this->getAdminList()->getPageNavigation($this->getParam('TABLEID'));
+        }
 
         if ($nav instanceof PageNavigation)
         {
@@ -503,7 +527,7 @@ class IList
 		$this->getAdminList()->AddGroupActionTable($arActions);
 		
 	}
-	
+
 	public function getAdminRow(){
 	    $n = 0;
         $pageSize = $this->getAdminList()->getNavSize();
@@ -516,7 +540,11 @@ class IList
             }
 			$this->getRowListAdmin($arRes);
 		}
-        $nav = $this->getAdminList()->getPageNavigation($this->getParam('TABLEID'));
+        if($this->navOb){
+            $nav = $this->navOb;
+        }else{
+            $nav = $this->getAdminList()->getPageNavigation($this->getParam('TABLEID'));
+        }
         $nav->setRecordCount($nav->getOffset() + $n);
         $this->getAdminList()->setNavigation($nav, Loc::getMessage($this->getParam("LANG_CODE")."NAV_TEXT"), false);
 

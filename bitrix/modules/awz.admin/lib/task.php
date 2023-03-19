@@ -34,7 +34,7 @@ class TaskTable extends ORM\Data\DataManager
 
             $fieldOrm = null;
             if($field['isMultiple']){
-                continue;
+                //continue;
             }
             if($field['type'] == 'integer'){
                 $fieldOrm = (new ORM\Fields\IntegerField($key, array(
@@ -46,6 +46,12 @@ class TaskTable extends ORM\Data\DataManager
                 }
             }
             if($field['type'] == 'string'){
+                $fieldOrm = (new ORM\Fields\StringField($key, array(
+                        'title' => $field['title']
+                    )
+                ));
+            }
+            if($field['type'] == 'crm'){
                 $fieldOrm = (new ORM\Fields\StringField($key, array(
                         'title' => $field['title']
                     )
