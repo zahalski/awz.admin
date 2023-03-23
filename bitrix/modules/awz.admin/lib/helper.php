@@ -261,6 +261,7 @@ class Helper {
             if($fieldData['type'] == 'enum'){
 
                 if(!$fieldData['isReadOnly']) {
+                    if(!isset($fieldData['values'][''])) $fieldData['values'][''] = '-';
                     $row->AddSelectField($fieldCode, $fieldData['values'], array("size" => $fieldData['settings']['SIZE']));
                 }else{
 
@@ -385,9 +386,11 @@ class Helper {
                     $row->AddInputField($fieldCode, array("size" => $fieldData['settings']['SIZE']));
                 }
                 $userData = [];
-                if($fieldCode == 'createdBy'){
+                if(method_exists($ob, 'getUserData')){
+                    $userData = $ob->getUserData(intval($row->arRes[$fieldCode]));
+                }elseif($fieldCode == 'createdBy'){
                     $userData = $row->arRes['creator'];
-                }else if($fieldCode == 'responsibleId'){
+                }elseif($fieldCode == 'responsibleId'){
                     $userData = $row->arRes['responsible'];
                 }
 
@@ -405,7 +408,6 @@ class Helper {
                     $row->AddViewField($fieldCode, '<a class="open-smart" data-ent="user" data-id="'.$row->arRes[$fieldCode].'" href="#">'.$userName.'</a>');
                 }
 
-
             }
             if($fieldData['type'] == 'group'){
                 if(!$fieldData['isReadOnly']) {
@@ -415,6 +417,7 @@ class Helper {
 
                     $groupData = $row->arRes['group'];
                     if(!empty($groupData) && is_array($groupData)){
+                        if(!$groupData['image']) $groupData['image'] = '/bitrix/js/ui/icons/b24/images/ui-user-group.svg';
                         $html = '<a class="tasks-grid-group open-smart" data-ent="group" data-id="'.$row->arRes[$fieldCode].'" href="#"><span class="tasks-grid-avatar ui-icon ui-icon-common-user-group"><i style="background-image: url(\''.$groupData['image'].'\')"></i></span><span class="tasks-grid-group-inner">'.$groupData['name'].'</span><span class="tasks-grid-filter-remove"></span></a>';
                         $row->AddViewField($fieldCode, $html);
                     }else{
@@ -528,7 +531,16 @@ class Helper {
         }
         if($obField instanceof \Bitrix\Main\ORM\Fields\IntegerField){
             if(isset($options['type']) && $options['type']=='user'){
-                return [];
+                return [
+                    'id'=>$filterId,
+                    'realId'=>$obField->getColumnName(),
+                    'name'=>$filterTitle,
+                    'type'=>'string',
+                    'additionalFilter' => [
+                        'isEmpty',
+                        'hasAnyValue',
+                    ],
+                ];
             }elseif(isset($options['type']) && $options['type']=='group'){
                 if(!empty($options['items'])){
                     return [
@@ -617,6 +629,36 @@ class Helper {
 
     public static function createCrmLink($entity){
         return '<a class="open-smart" data-preloaded="0" data-ent="auto" data-id="'.$entity.'" href="#">'.$entity.'</a>';
+    }
+
+    public static function getGridParams(string $grid = ""): \Bitrix\Main\Result
+    {
+        $result = new \Bitrix\Main\Result();
+
+        $gridOptions = explode('__',$grid);
+        if(empty($gridOptions)){
+            $result->addError(new \Bitrix\Main\Error("Идентификатор грида не верный"));
+        }
+
+        $gridOptionsAr = [];
+        if($result->isSuccess()){
+            foreach($gridOptions as $opt){
+                if(!$opt) continue;
+                $tmp = (string) htmlspecialcharsEx($opt);
+                if(preg_match("/([0-9a-z]+)_(.*?)/Uis", $tmp, $tmpMath)){
+                    if(count($tmpMath) == 3){
+                        $gridOptionsAr['PARAM_'.$tmpMath[1]] = $tmpMath[2];
+                    }
+                }
+            }
+        }
+        if(empty($gridOptionsAr)){
+            $result->addError(new \Bitrix\Main\Error("Параметры грида не найдены"));
+        }else{
+            $result->setData(['options'=>$gridOptionsAr]);
+        }
+
+        return $result;
     }
 
 }
