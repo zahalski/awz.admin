@@ -133,6 +133,24 @@ class Option extends Grid\Options {
         $this->all_options["views"][$this->currentView]["sticked_columns"] = is_array($columns) ? $columns : [];
     }
 
+    public function rmCustom($data){
+        if(is_array($data) && isset($data[0]) && isset($data[1])){
+            if(!isset($this->all_options["custom"])) $this->all_options["custom"] = [];
+            $fin = [];
+            foreach($this->all_options["custom"] as $row){
+                if(serialize($data) !== serialize($row)){
+                    $fin[] = $row;
+                }
+            }
+            $this->all_options["custom"] = $fin;
+        }
+    }
+    public function setCustom($data){
+        if(is_array($data) && isset($data[0]) && isset($data[1])){
+            if(!isset($this->all_options["custom"])) $this->all_options["custom"] = [];
+            $this->all_options["custom"][] = $data;
+        }
+    }
 
 
     public function getStickedColumns(){

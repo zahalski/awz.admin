@@ -70,6 +70,14 @@ foreach ($data as $key => $item)
 			$options->setExpandedRows($item["ids"]);
 			break;
 
+        case 'custom':
+			$options->setCustom($item["data"]);
+			break;
+
+        case 'custom_rm':
+			$options->rmCustom($item["data"]);
+			break;
+
 		case Actions::GRID_SET_COLLAPSED_GROUPS:
 			$options->setCollapsedGroups($item["ids"]);
 			break;

@@ -6,11 +6,12 @@ use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ORM;
 use Bitrix\Main\Result;
+use Bitrix\Main\Text\StringHelper;
 use Bitrix\Main\Type\DateTime;
 
 Loc::loadMessages(__FILE__);
 
-class SmartTable extends ORM\Data\DataManager
+class UnoTable extends ORM\Data\DataManager
 {
     public static $fields;
 
@@ -27,9 +28,10 @@ class SmartTable extends ORM\Data\DataManager
     public static function getMap()
     {
         $fields = array();
+
         //echo'<pre>';print_r(self::$fields);echo'</pre>';
-        //die();
         foreach(self::$fields as $key=>$field){
+
             $fieldOrm = null;
             if($field['isMultiple']){
                 continue;
@@ -39,7 +41,7 @@ class SmartTable extends ORM\Data\DataManager
                         'title' => $field['title']
                     )
                 ));
-                if($key=='id'){
+                if($key=='ID'){
                     $fieldOrm->configurePrimary()->configureAutocomplete();
                 }
             }
@@ -49,27 +51,7 @@ class SmartTable extends ORM\Data\DataManager
                     )
                 ));
             }
-            if($field['type'] == 'crm_entity'){
-                $fieldOrm = (new ORM\Fields\StringField($key, array(
-                        'title' => $field['title'],
-                        'settings'=>$field['settings']
-                    )
-                ));
-            }
-            if($field['type'] == 'crm'){
-                $fieldOrm = (new ORM\Fields\StringField($key, array(
-                        'title' => $field['title'],
-                        'settings'=>$field['settings']
-                    )
-                ));
-            }
             if($field['type'] == 'url'){
-                $fieldOrm = (new ORM\Fields\StringField($key, array(
-                        'title' => $field['title']
-                    )
-                ));
-            }
-            if($field['type'] == 'money'){
                 $fieldOrm = (new ORM\Fields\StringField($key, array(
                         'title' => $field['title']
                     )
@@ -87,6 +69,12 @@ class SmartTable extends ORM\Data\DataManager
                     )
                 ));
             }
+            if($field['type'] == 'enum' && !empty($field['values'])){
+                $fieldOrm = (new ORM\Fields\EnumField($key, array(
+                        'title' => $field['title']
+                    )
+                ))->configureValues($field['values']);
+            }
             if($field['type'] == 'date'){
                 $fieldOrm = (new ORM\Fields\DateField($key, array(
                         'title' => $field['title']
@@ -99,35 +87,27 @@ class SmartTable extends ORM\Data\DataManager
                     )
                 ));
             }
+            if($field['type'] == 'group'){
+                $fieldOrm = (new ORM\Fields\IntegerField($key, array(
+                        'title' => $field['title']
+                    )
+                ));
+            }
             if($field['type'] == 'double'){
                 $fieldOrm = (new ORM\Fields\FloatField($key, array(
                         'title' => $field['title']
                     )
                 ));
             }
-            if($field['type'] == 'enumeration' && !empty($field['values'])){
-                $fieldOrm = (new ORM\Fields\EnumField($key, array(
-                        'title' => $field['title']
-                    )
-                ))->configureValues($field['values']);
-            }
-            if($field['type'] == 'crm_status' && !empty($field['values'])){
-                $fieldOrm = (new ORM\Fields\EnumField($key, array(
-                        'title' => $field['title']
-                    )
-                ))->configureValues($field['values']);
-            }
-            if($field['type'] == 'crm_category' && !empty($field['values'])){
-                $fieldOrm = (new ORM\Fields\EnumField($key, array(
-                        'title' => $field['title']
-                    )
-                ))->configureValues($field['values']);
-            }
             if($fieldOrm && $field['isRequired']){
                 $fieldOrm->configureRequired();
             }
             if($fieldOrm){
-                $fieldOrm->setParameter('isReadOnly', $field['isReadOnly']);
+                if($field['sort']){
+                    $fieldOrm->setParameter('sortable', $field['sort']);
+                }else{
+                    $fieldOrm->setParameter('sortable', false);
+                }
                 $fields[$key] = $fieldOrm;
             }
         }

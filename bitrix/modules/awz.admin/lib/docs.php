@@ -114,6 +114,7 @@ class DocsTable extends ORM\Data\DataManager
                 }else{
                     $fieldOrm->setParameter('sortable', false);
                 }
+                $fieldOrm->setParameter('isReadOnly', $field['isReadOnly']);
                 $fields[$key] = $fieldOrm;
             }
         }

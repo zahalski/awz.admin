@@ -3,6 +3,7 @@ namespace Awz\Admin;
 
 use Bitrix\Main\Loader;
 use Bitrix\Main\UI\Filter\Options as FilterOptions;
+use Awz\Admin\Grid\Option as GridOptions;
 
 class Helper {
 
@@ -13,6 +14,516 @@ class Helper {
         return $code;
     }
 
+    /**
+     * @param array $arParams параметры действий
+     * @param $itemNew дополненный список действий base_action_select
+     * @return void
+     */
+    public static function replaceDefActionsList(array &$arParams, $itemNew){
+        $find = false;
+        foreach($arParams as &$item){
+            if($item['ID'] === 'base_action_select'){
+                $find = true;
+                $item = $itemNew;
+                break;
+            }
+        }
+        unset($item);
+        if(!$find){
+            $arParams[] = $itemNew;
+        }
+    }
+
+    /**
+     * @param array $arParams параметры действий
+     * @return array
+     */
+    public static function getDefActionsList(array $arParams=[]){
+        foreach($arParams as $item){
+            if($item['ID'] === 'base_action_select'){
+                return $item;
+            }
+        }
+        $createItemAction = [
+            'TYPE'=>'DROPDOWN',
+            'ID' => 'base_action_select',
+            'NAME' => 'action_button_awz_smart',
+            'ITEMS'=>[]
+        ];
+        $createItemAction['ITEMS'][] = [
+            'NAME'=>'- действия -',
+            'VALUE'=>'default',
+            'ONCHANGE'=>[
+                ['ACTION'=>'RESET_CONTROLS']
+            ]
+        ];
+        return $createItemAction;
+    }
+
+    /**
+     * @param array $arParams параметры сущности грида
+     * @param $checkAuthMember
+     * @param $adminCustom
+     * @return void
+     */
+    public static function setCleverSmartParams(&$arParams, $checkAuthMember, $adminCustom){
+        if(empty($arParams['CLEVER_FIELDS'])) return;
+        if(!isset($arParams['ACTION_PANEL']['GROUPS'][0]['ITEMS'])) return;
+        if(!is_array($arParams['ACTION_PANEL']['GROUPS'][0]['ITEMS'])) return;
+        $createItemAction = self::getDefActionsList($arParams['ACTION_PANEL']['GROUPS'][0]['ITEMS']);
+        $fieldid = 'ufCrm'.$arParams['CLEVER_SMART']['id'].'Controls';
+        $fieldid2 = 'ufCrm'.$arParams['CLEVER_SMART']['id'].'Params';
+        if(!empty($arParams['CLEVER_FIELDS'][$fieldid]['items'])){
+            $generatedItem = [];
+            foreach($arParams['CLEVER_FIELDS'][$fieldid]['items'] as $itm){
+
+                //Генерация отчета|Y|1|deal,contact,company|216,218|AWZ_SMART_TASK_USER_CRM_LEAD_LIST_TOOLBAR
+                /*
+                 * 0 название действия
+                 * 1 разрешить для всех элементов по фильтру
+                 * 2 ид пользователя
+                 * 3 crm сущности для выбора (lead,contact,company,deal,quote)
+                 * 4 ид доступных параметров
+                 * 5 ид грида
+                 * */
+
+
+                $tmp = explode('||',$itm['VALUE']);
+                $tmp[2] = explode(',',$tmp[2]);
+                $tmp[3] = explode(',',$tmp[3]);
+                $tmp[4] = explode(',',$tmp[4]);
+                //echo'<pre>';print_r($tmp);echo'</pre>';
+                //die();
+                $itmParams = [
+                    'name'=>$tmp[0],
+                    'showAll'=>$tmp[1] == 'Y',
+                    'users'=>$tmp[2],
+                    'crm'=>$tmp[3],
+                    'params'=>$tmp[4],
+                    'grid'=>$tmp[5]
+                ];
+                if(!$itmParams['grid']){
+                    $itmParams['grid'] = $adminCustom->getParam('TABLEID');
+                }
+                if(empty($itmParams['users'])){
+                    $itmParams['users'][] = $checkAuthMember;
+                }
+                //echo'<pre>';print_r($itmParams);echo'</pre>';
+                //echo'<pre>';print_r($adminCustom->getParam('TABLEID'));echo'</pre>';
+                $checkGridName = false;
+                $gridPrepare = preg_replace('/([^0-9a-z_*[]{},()|])/','',strtolower($itmParams['grid']));
+                $gridPrepare = str_replace('*','.*',$gridPrepare);
+                $regex = '/^('.$gridPrepare.')$/is';
+                if(strtolower($itmParams['grid']) == strtolower($adminCustom->getParam('TABLEID'))){
+                    $checkGridName = true;
+                }elseif(preg_match($regex,strtolower($adminCustom->getParam('TABLEID')))){
+                    $itmParams['grid'] = $adminCustom->getParam('TABLEID');
+                    $checkGridName = true;
+                }
+                if(!$checkGridName) continue;
+                if(!in_array($checkAuthMember, $itmParams['users'])) continue;
+
+                $generatedItem['NAME'] = $itmParams['name'];
+                $generatedItem['VALUE'] = 'control_'.$itm['ID'];
+                $generatedItem['ONCHANGE'] = [
+                    ['ACTION'=>'RESET_CONTROLS'],
+                    [
+                        'ACTION'=>'CREATE',
+                        'DATA'=>[]
+                    ]
+                ];
+                $dopActions = [];
+                if(!empty($arParams['CLEVER_FIELDS'][$fieldid2]['items'])){
+                    foreach($arParams['CLEVER_FIELDS'][$fieldid2]['items'] as $dItm){
+                        if(!in_array($dItm['ID'], $itmParams['params'])) continue;
+                        $dopActions[] = [
+                            'NAME'=>$dItm['VALUE'],
+                            'VALUE'=>'param_'.$dItm['ID'],
+                        ];
+                    }
+                }
+
+                if(!empty($dopActions)){
+
+                    $values = [
+                        [
+                            'NAME'=>'- параметр -',
+                            'VALUE'=>'default',
+                            'ONCHANGE'=>[
+                                ['ACTION'=>'RESET_CONTROLS']
+                            ]
+                        ]
+                    ];
+                    foreach($dopActions as $tmp){
+                        $values[] = $tmp;
+                    }
+
+                    $generatedItem['ONCHANGE'][1]['DATA'][] = [
+                        'TYPE'=>'DROPDOWN',
+                        'ID'=>'paramId',
+                        'NAME'=>'paramId',
+                        'TEXT'=>'Доп. параметр',
+                        'ITEMS'=>$values
+                    ];
+                }
+
+                if($itmParams['showAll']){
+                    $generatedItem['ONCHANGE'][1]['DATA'][] = [
+                        'TYPE'=>'CHECKBOX',
+                        'ID'=>'apply_button_for_all',
+                        'TEXT'=>' все ид',
+                        'TITLE'=>' все ид',
+                        'LABEL'=>' все ид',
+                        'CLASS'=>'main-grid-panel-control',
+                        'ONCHANGE'=>[
+                            ['ACTION'=>'RESET_CONTROLS']
+                        ]
+                    ];
+                }
+                if(!empty($itmParams['crm'])){
+                    $generatedItem['ONCHANGE'][1]['DATA'][] = [
+                        'TYPE'=>'TEXT',
+                        'ID'=>'crm_entry',
+                        'NAME'=>'crm_entry',
+                        'CLASS'=>'apply',
+                        'ONCHANGE'=>[
+                            ['ACTION'=>'RESET_CONTROLS'],
+                            [
+                                'ACTION'=>'CALLBACK',
+                                'DATA'=>[
+                                    ['JS'=>"window.awz_helper.openDialogCrm()"]
+                                ]
+                            ]
+                        ]
+                    ];
+                    $generatedItem['ONCHANGE'][1]['DATA'][] = [
+                        'TYPE'=>'BUTTON',
+                        'ID'=>'open_crm_dialog',
+                        'CLASS'=>'cansel',
+                        'TEXT'=>'...',
+                        'ONCHANGE'=>[
+                            [
+                                'ACTION'=>'CALLBACK',
+                                'DATA'=>[
+                                    ['JS'=>"window.awz_helper.openDialogCrm('crm_entry_control','".implode(',', $itmParams['crm'])."')"]
+                                ]
+                            ]
+                        ]
+                    ];
+                }
+
+
+                $generatedItem['ONCHANGE'][1]['DATA'][] = [
+                    'TYPE'=>'BUTTON',
+                    'ID'=>'apply_button',
+                    'CLASS'=>'apply',
+                    'TEXT'=>'Применить',
+                    'ONCHANGE'=>[
+                        [
+                            'ACTION'=>'CALLBACK',
+                            'DATA'=>[
+                                ['JS'=>"window.awz_helper.applyButton('add_item','".$arParams['CLEVER_SMART']['entityTypeId']."','".$arParams['CLEVER_SMART']['id']."')"]
+                            ]
+                        ]
+                    ]
+                ];
+                $generatedItem['ONCHANGE'][1]['DATA'][] = [
+                    'TYPE'=>'BUTTON',
+                    'ID'=>'cansel_button',
+                    'CLASS'=>'main-grid-buttons cancel',
+                    'TEXT'=>'Отменить',
+                    'ONCHANGE'=>[
+                        [
+                            'ACTION'=>'CALLBACK',
+                            'DATA'=>[
+                                ['JS'=>"window.awz_helper.canselGroupActions()"]
+                            ]
+                        ]
+                    ]
+                ];
+
+                $createItemAction['ITEMS'][] = $generatedItem;
+            }
+            if(count($createItemAction['ITEMS'])>1){
+                $tmp = $arParams['ACTION_PANEL']['GROUPS'][0]['ITEMS'];
+                self::replaceDefActionsList($tmp, $createItemAction);
+                $arParams['ACTION_PANEL']['GROUPS'][0]['ITEMS'] = $tmp;
+            }
+        }
+    }
+
+    /**
+     * добавление группового добавления
+     *
+     * @param $arParams параметры сущности грида
+     * @param $adminCustom
+     * @return void
+     */
+    public static function setAddActionParams(&$arParams, $adminCustom)
+    {
+        $generatedItem = [];
+        $generatedItem['NAME'] = 'ДОБАВЛЕНИЕ КОПИЙ';
+        $generatedItem['VALUE'] = 'control_ef_copy';
+        $generatedItem['ONCHANGE'] = [
+            ['ACTION'=>'RESET_CONTROLS'],
+            [
+                'ACTION'=>'CREATE',
+                'DATA'=>[]
+            ]
+        ];
+        $generatedItem['ONCHANGE'][1]['DATA'][] = [
+            'TYPE'=>'TEXT',
+            'ID'=>'value_entry',
+            'NAME'=>'value_entry',
+            'CLASS'=>'apply',
+            'PLACEHOLDER'=>'Количество',
+            'ONCHANGE'=>[
+                ['ACTION'=>'RESET_CONTROLS'],
+                [
+                    'ACTION'=>'CALLBACK',
+                    'DATA'=>[
+                        ['JS'=>""]
+                    ]
+                ]
+            ]
+        ];
+        $generatedItem['ONCHANGE'][1]['DATA'][] = [
+            'TYPE'=>'BUTTON',
+            'ID'=>'apply_button',
+            'CLASS'=>'apply',
+            'TEXT'=>'Копировать',
+            'ONCHANGE'=>[
+                [
+                    'ACTION'=>'CALLBACK',
+                    'DATA'=>[
+                        ['JS'=>"window.awz_helper.applyGroupButton('ef_items')"]
+                    ]
+                ]
+            ]
+        ];
+
+        $generatedItem['ONCHANGE'][1]['DATA'][] = [
+            'TYPE'=>'BUTTON',
+            'ID'=>'cansel_button',
+            'CLASS'=>'main-grid-buttons cancel',
+            'TEXT'=>'Отменить',
+            'ONCHANGE'=>[
+                [
+                    'ACTION'=>'CALLBACK',
+                    'DATA'=>[
+                        ['JS'=>"window.awz_helper.canselGroupActions()"]
+                    ]
+                ]
+            ]
+        ];
+
+        $createItemAction = \Awz\Admin\Helper::getDefActionsList(
+            $arParams['ACTION_PANEL']['GROUPS'][0]['ITEMS']
+        );
+        $createItemAction['ITEMS'][] = $generatedItem;
+        \Awz\Admin\Helper::replaceDefActionsList(
+            $arParams['ACTION_PANEL']['GROUPS'][0]['ITEMS'],
+            $createItemAction
+        );
+    }
+
+    /**
+     * добавление группового удаления
+     *
+     * @param $arParams параметры сущности грида
+     * @param $adminCustom
+     * @return void
+     */
+    public static function setDeleteActionParams(&$arParams, $adminCustom)
+    {
+        $generatedItem = [];
+        $generatedItem['NAME'] = 'УДАЛЕНИЕ ЭЛЕМЕНТА';
+        $generatedItem['VALUE'] = 'control_ef_delete';
+        $generatedItem['ONCHANGE'] = [
+            ['ACTION'=>'RESET_CONTROLS'],
+            [
+                'ACTION'=>'CREATE',
+                'DATA'=>[]
+            ]
+        ];
+        $generatedItem['ONCHANGE'][1]['DATA'][] = [
+            'TYPE'=>'CHECKBOX',
+            'ID'=>'apply_button_for_all',
+            'TEXT'=>' все ид',
+            'TITLE'=>' все ид',
+            'LABEL'=>' все ид',
+            'CLASS'=>'main-grid-panel-control',
+            'ONCHANGE'=>[
+                ['ACTION'=>'RESET_CONTROLS']
+            ]
+        ];
+        $generatedItem['ONCHANGE'][1]['DATA'][] = [
+            'TYPE'=>'BUTTON',
+            'ID'=>'apply_button',
+            'CLASS'=>'apply',
+            'TEXT'=>'Удалить',
+            'ONCHANGE'=>[
+                [
+                    'ACTION'=>'CALLBACK',
+                    'DATA'=>[
+                        ['JS'=>"window.awz_helper.applyGroupButton('ef_items')"]
+                    ]
+                ]
+            ]
+        ];
+        $generatedItem['ONCHANGE'][1]['DATA'][] = [
+            'TYPE'=>'BUTTON',
+            'ID'=>'cansel_button',
+            'CLASS'=>'main-grid-buttons cancel',
+            'TEXT'=>'Отменить',
+            'ONCHANGE'=>[
+                [
+                    'ACTION'=>'CALLBACK',
+                    'DATA'=>[
+                        ['JS'=>"window.awz_helper.canselGroupActions()"]
+                    ]
+                ]
+            ]
+        ];
+
+        $createItemAction = \Awz\Admin\Helper::getDefActionsList(
+            $arParams['ACTION_PANEL']['GROUPS'][0]['ITEMS']
+        );
+        $createItemAction['ITEMS'][] = $generatedItem;
+        \Awz\Admin\Helper::replaceDefActionsList(
+            $arParams['ACTION_PANEL']['GROUPS'][0]['ITEMS'],
+            $createItemAction
+        );
+    }
+
+    /**
+     * добавление действий с групповым изменением значения поля
+     *
+     * @param $arParams параметры сущности грида
+     * @param $fields поля сущности
+     * @param $adminCustom
+     * @return void
+     */
+    public static function setFieldsActionParams(&$arParams, $fields, $adminCustom){
+        foreach($fields as $obField){
+            /* @var $obField Bitrix\Main\ORM\Fields\Field */
+            if($obField->getParameter('isReadOnly')) continue;
+            $fieldData = $arParams['SMART_FIELDS'][$obField->getName()];
+
+            $generatedItem = [];
+            $generatedItem['NAME'] = 'Изменение поля '.$obField->getTitle();
+            $generatedItem['VALUE'] = 'control_ef_'.$obField->getName();
+            $generatedItem['ONCHANGE'] = [
+                ['ACTION'=>'RESET_CONTROLS'],
+                [
+                    'ACTION'=>'CREATE',
+                    'DATA'=>[]
+                ]
+            ];
+            $generatedItem['ONCHANGE'][1]['DATA'][] = [
+                'TYPE'=>'CHECKBOX',
+                'ID'=>'apply_button_for_all',
+                'TEXT'=>' все ид',
+                'TITLE'=>' все ид',
+                'LABEL'=>' все ид',
+                'CLASS'=>'main-grid-panel-control',
+                'ONCHANGE'=>[
+                    ['ACTION'=>'RESET_CONTROLS']
+                ]
+            ];
+            if($fieldData['type'] == 'enum' || $fieldData['type'] == 'enumeration' ||
+                $fieldData['type'] == 'crm_status' || $fieldData['type'] == 'crm_category')
+            {
+                if(!isset($fieldData['values'][''])) $fieldData['values'][''] = '-';
+                $items = [];
+                foreach($fieldData['values'] as $code=>$val){
+                    $items[] = [
+                        'NAME'=>$val,
+                        'VALUE'=>$code,
+                    ];
+                }
+                $generatedItem['ONCHANGE'][1]['DATA'][] = [
+                    'TYPE'=>'DROPDOWN',
+                    'ID'=>'value_entry',
+                    'NAME'=>'value_entry',
+                    'CLASS'=>'apply',
+                    'ONCHANGE'=>[
+                        ['ACTION'=>'RESET_CONTROLS'],
+                        [
+                            'ACTION'=>'CALLBACK',
+                            'DATA'=>[
+                                ['JS'=>""]
+                            ]
+                        ]
+                    ],
+                    'ITEMS'=>$items
+                ];
+            }else{
+                $generatedItem['ONCHANGE'][1]['DATA'][] = [
+                    'TYPE'=>'TEXT',
+                    'ID'=>'value_entry',
+                    'NAME'=>'value_entry',
+                    'CLASS'=>'apply',
+                    'PLACEHOLDER'=>'Значение',
+                    'ONCHANGE'=>[
+                        ['ACTION'=>'RESET_CONTROLS'],
+                        [
+                            'ACTION'=>'CALLBACK',
+                            'DATA'=>[
+                                ['JS'=>""]
+                            ]
+                        ]
+                    ]
+                ];
+            }
+
+            $generatedItem['ONCHANGE'][1]['DATA'][] = [
+                'TYPE'=>'BUTTON',
+                'ID'=>'apply_button',
+                'CLASS'=>'apply',
+                'TEXT'=>'Применить',
+                'ONCHANGE'=>[
+                    [
+                        'ACTION'=>'CALLBACK',
+                        'DATA'=>[
+                            ['JS'=>"window.awz_helper.applyGroupButton('ef_items')"]
+                        ]
+                    ]
+                ]
+            ];
+            $generatedItem['ONCHANGE'][1]['DATA'][] = [
+                'TYPE'=>'BUTTON',
+                'ID'=>'cansel_button',
+                'CLASS'=>'main-grid-buttons cancel',
+                'TEXT'=>'Отменить',
+                'ONCHANGE'=>[
+                    [
+                        'ACTION'=>'CALLBACK',
+                        'DATA'=>[
+                            ['JS'=>"window.awz_helper.canselGroupActions()"]
+                        ]
+                    ]
+                ]
+            ];
+
+            $createItemAction = \Awz\Admin\Helper::getDefActionsList(
+                $arParams['ACTION_PANEL']['GROUPS'][0]['ITEMS']
+            );
+            $createItemAction['ITEMS'][] = $generatedItem;
+            \Awz\Admin\Helper::replaceDefActionsList(
+                $arParams['ACTION_PANEL']['GROUPS'][0]['ITEMS'],
+                $createItemAction
+            );
+
+        }
+    }
+
+    /**
+     * стандартные action групповых действий
+     *
+     * @param string $type edit|delete
+     * @return array
+     */
     public static function getGroupAction($type){
 
         $action = [];
@@ -145,6 +656,33 @@ class Helper {
         return $action;
     }
 
+    public static function addCustomPanelButton($params){
+        $gridOptions = new GridOptions($params['TABLEID']);
+        $allOptions = $gridOptions->GetOptions();
+        $customBtn = [];
+        if(isset($allOptions['custom'])){
+            foreach($allOptions['custom'] as $opt){
+                if($opt[0] === 'add_link'){
+                    $customBtn[] = [
+                        'TEXT' => $opt[1],
+                        'ICON' => '',
+                        'LINK' => '',
+                        'ONCLICK' => 'window.awz_helper.menuCustom("'.$opt[2].'");return false;',
+                    ];
+                }
+            }
+            if(!empty($customBtn)){
+                $prm = $params['BUTTON_CONTEXTS'];
+                if(!is_array($prm)){
+                    $prm = [];
+                }
+                $prm[] = $customBtn;
+                $params['BUTTON_CONTEXTS'] = $prm;
+            }
+        }
+        return $params;
+    }
+
     public static function addCustomAction($actions=[]){
         $parentAction = self::getGroupAction('actions');
         if(!empty($actions)){
@@ -156,7 +694,7 @@ class Helper {
     }
 
     public static function checkEmptyField(&$row){
-        if(!$row->arRes['id']){
+        if(!$row->arRes['id'] && !$row->arRes['ID']){
             foreach($row->arRes as $k=>$v){
                 $row->arRes[$k] = '';
                 $row->AddInputField($k);
@@ -218,7 +756,7 @@ class Helper {
                 $row->arRes[$fieldCode] = '';
             }
         }
-        if($fieldCode == 'title'){
+        if(mb_strtolower($fieldCode) == 'title'){
             $codeEnt = $ob->getParam('SMART_ID');
             if($ob instanceof \TaskList) {
                 $codeEnt = 'task';
@@ -231,7 +769,7 @@ class Helper {
             if(!$fieldData['isReadOnly']){
                 $row->AddInputField($fieldCode, array("size"=>$fieldData['settings']['SIZE']));
             }
-        }elseif($fieldCode == 'id'){
+        }elseif(mb_strtolower($fieldCode) == 'id'){
             $addHtml = '';
             if(Loader::includeModule('awz.bxapistats')){
                 static $setStat = false;
@@ -258,10 +796,25 @@ class Helper {
                     $row->AddViewField($fieldCode, $row->arRes[$fieldCode]);
                 }
             }
-            if($fieldData['type'] == 'enum'){
+            if($fieldData['type'] == 'crm_entity'){
+                if(!$fieldData['isReadOnly']) {
+                    $row->AddInputField($fieldCode, array("size" => $fieldData['settings']['SIZE']));
+                }else{
+                    $row->AddViewField($fieldCode, $row->arRes[$fieldCode]);
+                }
+            }
+            if($fieldData['type'] == 'crm'){
+                if(!$fieldData['isReadOnly']) {
+                    $row->AddInputField($fieldCode, array("size" => $fieldData['settings']['SIZE']));
+                }else{
+                    $row->AddViewField($fieldCode, $row->arRes[$fieldCode]);
+                }
+            }
+            if($fieldData['type'] == 'enum' || $fieldData['type'] == 'crm_status' || $fieldData['type'] == 'crm_category'){
 
                 if(!$fieldData['isReadOnly']) {
                     if(!isset($fieldData['values'][''])) $fieldData['values'][''] = '-';
+                    if(!isset($fieldData['values'][$row->arRes[$fieldCode]])) $fieldData['values'][$row->arRes[$fieldCode]] = $row->arRes[$fieldCode];
                     $row->AddSelectField($fieldCode, $fieldData['values'], array("size" => $fieldData['settings']['SIZE']));
                 }else{
 
@@ -290,6 +843,8 @@ class Helper {
             }
             if($fieldData['type'] == 'enumeration'){
                 if(!$fieldData['isReadOnly']) {
+                    if(!isset($fieldData['values'][''])) $fieldData['values'][''] = '-';
+                    if(!isset($fieldData['values'][$row->arRes[$fieldCode]])) $fieldData['values'][$row->arRes[$fieldCode]] = $row->arRes[$fieldCode];
                     $row->AddSelectField($fieldCode, $fieldData['values'], array("size" => $fieldData['settings']['SIZE']));
                 }
             }
@@ -499,6 +1054,7 @@ class Helper {
                 'name'=>$filterTitle,
                 'type'=>'list',
                 "items" => $options['values'] ?? [],
+                //"params"=>["multiple"=>"Y"]
             ];
         }
         if($obField instanceof \Bitrix\Main\ORM\Fields\FloatField){
@@ -550,6 +1106,17 @@ class Helper {
                         'type'=>'list',
                         "items" => $options['items'],
                         //'params' => ['multiple' => 'Y']
+                    ];
+                }else{
+                    return [
+                        'id'=>$filterId,
+                        'realId'=>$obField->getColumnName(),
+                        'name'=>$filterTitle,
+                        'type'=>'string',
+                        'additionalFilter' => [
+                            'isEmpty',
+                            'hasAnyValue',
+                        ],
                     ];
                 }
             }else{
@@ -627,8 +1194,8 @@ class Helper {
 
     }
 
-    public static function createCrmLink($entity){
-        return '<a class="open-smart" data-preloaded="0" data-ent="auto" data-id="'.$entity.'" href="#">'.$entity.'</a>';
+    public static function createCrmLink($elId, $entityCode="auto"){
+        return '<a class="open-smart" data-preloaded="0" data-ent="'.$entityCode.'" data-id="'.$elId.'" href="#">'.$elId.'</a>';
     }
 
     public static function getGridParams(string $grid = ""): \Bitrix\Main\Result
