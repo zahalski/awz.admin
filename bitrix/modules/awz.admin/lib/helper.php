@@ -2,6 +2,8 @@
 namespace Awz\Admin;
 
 use Bitrix\Main\Loader;
+use Bitrix\Main\LoaderException;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Filter\Options as FilterOptions;
 use Awz\Admin\Grid\Option as GridOptions;
 
@@ -51,7 +53,7 @@ class Helper {
             'ITEMS'=>[]
         ];
         $createItemAction['ITEMS'][] = [
-            'NAME'=>'- действия -',
+            'NAME'=>'- '.Loc::getMessage('AWZ_ADMIN_HELPER_VARIANTS').' -',
             'VALUE'=>'default',
             'ONCHANGE'=>[
                 ['ACTION'=>'RESET_CONTROLS']
@@ -147,7 +149,7 @@ class Helper {
 
                     $values = [
                         [
-                            'NAME'=>'- параметр -',
+                            'NAME'=>'- '.Loc::getMessage('AWZ_ADMIN_HELPER_PARAM_LABEL').' -',
                             'VALUE'=>'default',
                             'ONCHANGE'=>[
                                 ['ACTION'=>'RESET_CONTROLS']
@@ -162,7 +164,7 @@ class Helper {
                         'TYPE'=>'DROPDOWN',
                         'ID'=>'paramId',
                         'NAME'=>'paramId',
-                        'TEXT'=>'Доп. параметр',
+                        'TEXT'=>Loc::getMessage('AWZ_ADMIN_HELPER_PARAM_ADD_LABEL'),
                         'ITEMS'=>$values
                     ];
                 }
@@ -171,9 +173,9 @@ class Helper {
                     $generatedItem['ONCHANGE'][1]['DATA'][] = [
                         'TYPE'=>'CHECKBOX',
                         'ID'=>'apply_button_for_all',
-                        'TEXT'=>' все ид',
-                        'TITLE'=>' все ид',
-                        'LABEL'=>' все ид',
+                        'TEXT'=>' '.Loc::getMessage('AWZ_ADMIN_HELPER_ALL_ID'),
+                        'TITLE'=>' '.Loc::getMessage('AWZ_ADMIN_HELPER_ALL_ID'),
+                        'LABEL'=>' '.Loc::getMessage('AWZ_ADMIN_HELPER_ALL_ID'),
                         'CLASS'=>'main-grid-panel-control',
                         'ONCHANGE'=>[
                             ['ACTION'=>'RESET_CONTROLS']
@@ -217,7 +219,7 @@ class Helper {
                     'TYPE'=>'BUTTON',
                     'ID'=>'apply_button',
                     'CLASS'=>'apply',
-                    'TEXT'=>'Применить',
+                    'TEXT'=>Loc::getMessage('AWZ_ADMIN_HELPER_APPLY'),
                     'ONCHANGE'=>[
                         [
                             'ACTION'=>'CALLBACK',
@@ -231,7 +233,7 @@ class Helper {
                     'TYPE'=>'BUTTON',
                     'ID'=>'cansel_button',
                     'CLASS'=>'main-grid-buttons cancel',
-                    'TEXT'=>'Отменить',
+                    'TEXT'=>Loc::getMessage('AWZ_ADMIN_HELPER_CHANSEL'),
                     'ONCHANGE'=>[
                         [
                             'ACTION'=>'CALLBACK',
@@ -262,7 +264,7 @@ class Helper {
     public static function setAddActionParams(&$arParams, $adminCustom)
     {
         $generatedItem = [];
-        $generatedItem['NAME'] = 'ДОБАВЛЕНИЕ КОПИЙ';
+        $generatedItem['NAME'] = mb_strtoupper(Loc::getMessage('AWZ_ADMIN_HELPER_COPY_ADD'));
         $generatedItem['VALUE'] = 'control_ef_copy';
         $generatedItem['ONCHANGE'] = [
             ['ACTION'=>'RESET_CONTROLS'],
@@ -276,7 +278,7 @@ class Helper {
             'ID'=>'value_entry',
             'NAME'=>'value_entry',
             'CLASS'=>'apply',
-            'PLACEHOLDER'=>'Количество',
+            'PLACEHOLDER'=>Loc::getMessage('AWZ_ADMIN_HELPER_QUANTS'),
             'ONCHANGE'=>[
                 ['ACTION'=>'RESET_CONTROLS'],
                 [
@@ -291,7 +293,7 @@ class Helper {
             'TYPE'=>'BUTTON',
             'ID'=>'apply_button',
             'CLASS'=>'apply',
-            'TEXT'=>'Копировать',
+            'TEXT'=>Loc::getMessage('AWZ_ADMIN_HELPER_COPY'),
             'ONCHANGE'=>[
                 [
                     'ACTION'=>'CALLBACK',
@@ -306,7 +308,7 @@ class Helper {
             'TYPE'=>'BUTTON',
             'ID'=>'cansel_button',
             'CLASS'=>'main-grid-buttons cancel',
-            'TEXT'=>'Отменить',
+            'TEXT'=>Loc::getMessage('AWZ_ADMIN_HELPER_CHANSEL'),
             'ONCHANGE'=>[
                 [
                     'ACTION'=>'CALLBACK',
@@ -337,7 +339,7 @@ class Helper {
     public static function setDeleteActionParams(&$arParams, $adminCustom)
     {
         $generatedItem = [];
-        $generatedItem['NAME'] = 'УДАЛЕНИЕ ЭЛЕМЕНТА';
+        $generatedItem['NAME'] = mb_strtoupper(Loc::getMessage('AWZ_ADMIN_HELPER_DELL_LABEL'));
         $generatedItem['VALUE'] = 'control_ef_delete';
         $generatedItem['ONCHANGE'] = [
             ['ACTION'=>'RESET_CONTROLS'],
@@ -349,9 +351,9 @@ class Helper {
         $generatedItem['ONCHANGE'][1]['DATA'][] = [
             'TYPE'=>'CHECKBOX',
             'ID'=>'apply_button_for_all',
-            'TEXT'=>' все ид',
-            'TITLE'=>' все ид',
-            'LABEL'=>' все ид',
+            'TEXT'=>' '.Loc::getMessage('AWZ_ADMIN_HELPER_ALL_ID'),
+            'TITLE'=>' '.Loc::getMessage('AWZ_ADMIN_HELPER_ALL_ID'),
+            'LABEL'=>' '.Loc::getMessage('AWZ_ADMIN_HELPER_ALL_ID'),
             'CLASS'=>'main-grid-panel-control',
             'ONCHANGE'=>[
                 ['ACTION'=>'RESET_CONTROLS']
@@ -361,7 +363,7 @@ class Helper {
             'TYPE'=>'BUTTON',
             'ID'=>'apply_button',
             'CLASS'=>'apply',
-            'TEXT'=>'Удалить',
+            'TEXT'=>Loc::getMessage('AWZ_ADMIN_HELPER_DELETE'),
             'ONCHANGE'=>[
                 [
                     'ACTION'=>'CALLBACK',
@@ -375,7 +377,7 @@ class Helper {
             'TYPE'=>'BUTTON',
             'ID'=>'cansel_button',
             'CLASS'=>'main-grid-buttons cancel',
-            'TEXT'=>'Отменить',
+            'TEXT'=>Loc::getMessage('AWZ_ADMIN_HELPER_CHANSEL'),
             'ONCHANGE'=>[
                 [
                     'ACTION'=>'CALLBACK',
@@ -411,7 +413,7 @@ class Helper {
             $fieldData = $arParams['SMART_FIELDS'][$obField->getName()];
 
             $generatedItem = [];
-            $generatedItem['NAME'] = 'Изменение поля '.$obField->getTitle();
+            $generatedItem['NAME'] = Loc::getMessage('AWZ_ADMIN_HELPER_EDIT_FIELD_LABEL').' '.$obField->getTitle();
             $generatedItem['VALUE'] = 'control_ef_'.$obField->getName();
             $generatedItem['ONCHANGE'] = [
                 ['ACTION'=>'RESET_CONTROLS'],
@@ -423,9 +425,9 @@ class Helper {
             $generatedItem['ONCHANGE'][1]['DATA'][] = [
                 'TYPE'=>'CHECKBOX',
                 'ID'=>'apply_button_for_all',
-                'TEXT'=>' все ид',
-                'TITLE'=>' все ид',
-                'LABEL'=>' все ид',
+                'TEXT'=>' '.Loc::getMessage('AWZ_ADMIN_HELPER_ALL_ID'),
+                'TITLE'=>' '.Loc::getMessage('AWZ_ADMIN_HELPER_ALL_ID'),
+                'LABEL'=>' '.Loc::getMessage('AWZ_ADMIN_HELPER_ALL_ID'),
                 'CLASS'=>'main-grid-panel-control',
                 'ONCHANGE'=>[
                     ['ACTION'=>'RESET_CONTROLS']
@@ -464,7 +466,7 @@ class Helper {
                     'ID'=>'value_entry',
                     'NAME'=>'value_entry',
                     'CLASS'=>'apply',
-                    'PLACEHOLDER'=>'Значение',
+                    'PLACEHOLDER'=>Loc::getMessage('AWZ_ADMIN_HELPER_PARAM_VAL'),
                     'ONCHANGE'=>[
                         ['ACTION'=>'RESET_CONTROLS'],
                         [
@@ -481,7 +483,7 @@ class Helper {
                 'TYPE'=>'BUTTON',
                 'ID'=>'apply_button',
                 'CLASS'=>'apply',
-                'TEXT'=>'Применить',
+                'TEXT'=>Loc::getMessage('AWZ_ADMIN_HELPER_APPLY'),
                 'ONCHANGE'=>[
                     [
                         'ACTION'=>'CALLBACK',
@@ -495,7 +497,7 @@ class Helper {
                 'TYPE'=>'BUTTON',
                 'ID'=>'cansel_button',
                 'CLASS'=>'main-grid-buttons cancel',
-                'TEXT'=>'Отменить',
+                'TEXT'=>Loc::getMessage('AWZ_ADMIN_HELPER_CHANSEL'),
                 'ONCHANGE'=>[
                     [
                         'ACTION'=>'CALLBACK',
@@ -535,8 +537,8 @@ class Helper {
                 "ID"=>"grid_edit_button",
                 "NAME"=>"",
                 "CLASS"=>"icon edit",
-                "TEXT"=>"Редактировать",
-                "TITLE"=>"Редактировать отмеченные элементы",
+                "TEXT"=>Loc::getMessage('AWZ_ADMIN_HELPER_EDIT'),
+                "TITLE"=>Loc::getMessage("AWZ_ADMIN_HELPER_EDIT_1"),
                 "ONCHANGE"=>[
                     0=>[
                         'ACTION'=>'CREATE',
@@ -546,7 +548,7 @@ class Helper {
                                 'ID'=>'grid_save_button',
                                 'NAME'=>'',
                                 'CLASS'=>'save',
-                                'TEXT'=>'Сохранить',
+                                'TEXT'=>Loc::getMessage('AWZ_ADMIN_HELPER_SAVE'),
                                 'TITLE'=>'',
                                 'ONCHANGE'=>[
                                     [
@@ -573,7 +575,7 @@ class Helper {
                                 'ID'=>'grid_cancel_button',
                                 'NAME'=>'',
                                 'CLASS'=>'cancel',
-                                'TEXT'=>'Отменить',
+                                'TEXT'=>Loc::getMessage('AWZ_ADMIN_HELPER_CHANSEL'),
                                 'TITLE'=>'',
                                 'ONCHANGE'=>[
                                     [
@@ -620,18 +622,18 @@ class Helper {
                 'ID' => 'grid_remove_button',
                 'NAME' => '',
                 'CLASS' => 'icon remove',
-                'TEXT' => 'Удалить',
-                'TITLE' => 'Удалить отмеченные элементы',
+                'TEXT' => Loc::getMessage('AWZ_ADMIN_HELPER_DELETE'),
+                'TITLE' => Loc::getMessage('AWZ_ADMIN_HELPER_DELETE_TITLE'),
                 'ONCHANGE'=>[
                     [
                         'ACTION'=>'CALLBACK',
                         'CONFIRM'=>'1',
-                        'CONFIRM_APPLY_BUTTON'=>'Удалить',
+                        'CONFIRM_APPLY_BUTTON'=>Loc::getMessage('AWZ_ADMIN_HELPER_DELETE'),
                         'DATA'=>[
                             ['JS'=>'Grid.removeSelected()']
                         ],
-                        'CONFIRM_MESSAGE'=>'Подтвердите действие для отмеченных элементов',
-                        'CONFIRM_CANCEL_BUTTON'=>'Отменить'
+                        'CONFIRM_MESSAGE'=>Loc::getMessage('AWZ_ADMIN_HELPER_PARAM_APPLY_CONFIRM'),
+                        'CONFIRM_CANCEL_BUTTON'=>Loc::getMessage('AWZ_ADMIN_HELPER_CHANSEL')
                     ]
                 ]
             ];
@@ -643,7 +645,7 @@ class Helper {
                 'NAME' => 'action_button_awz_smart_TASK_USER_crm_lead_list_toolbar',
                 'ITEMS'=>[
                     [
-                        'NAME'=>'- действия -',
+                        'NAME'=>'- '.Loc::getMessage('AWZ_ADMIN_HELPER_VARIANTS').' -',
                         'VALUE'=>'default',
                         'ONCHANGE'=>[
                             ['ACTION'=>'RESET_CONTROLS']
@@ -764,7 +766,7 @@ class Helper {
             if(isset($fieldData['noLink']) && $fieldData['noLink']){
                 $row->AddViewField($fieldCode, $row->arRes[$fieldCode]);
             }else{
-                $row->AddViewField($fieldCode, '<a class="open-smart" data-ent="'.$codeEnt.'" data-id="'.$row->arRes['id'].'" href="#">' . $row->arRes[$fieldCode] . '</a>');
+                $row->AddViewField($fieldCode, '<a class="open-smart" data-ent="'.$codeEnt.'" data-id="'.$row->arRes[$ob->getParam('PRIMARY')].'" href="#">' . $row->arRes[$fieldCode] . '</a>');
             }
             if(!$fieldData['isReadOnly']){
                 $row->AddInputField($fieldCode, array("size"=>$fieldData['settings']['SIZE']));
@@ -786,7 +788,7 @@ class Helper {
             if(isset($fieldData['noLink']) && $fieldData['noLink']){
                 $row->AddViewField($fieldCode, $addHtml.$row->arRes[$fieldCode]);
             }else{
-                $row->AddViewField($fieldCode, $addHtml.'<a class="open-smart" data-ent="'.$codeEnt.'" data-id="'.$row->arRes['id'].'" href="#">'.$row->arRes[$fieldCode].'</a>');
+                $row->AddViewField($fieldCode, $addHtml.'<a class="open-smart" data-ent="'.$codeEnt.'" data-id="'.$row->arRes[$ob->getParam('PRIMARY')].'" href="#">'.$row->arRes[$fieldCode].'</a>');
             }
         }else{
             if($fieldData['type'] == 'string'){
@@ -794,6 +796,20 @@ class Helper {
                     $row->AddInputField($fieldCode, array("size" => $fieldData['settings']['SIZE']));
                 }else{
                     $row->AddViewField($fieldCode, $row->arRes[$fieldCode]);
+                }
+            }
+            if($fieldData['type'] == 'crm_multifield'){
+                $value = $row->arRes[$fieldCode];
+                if(is_array($row->arRes[$fieldCode])){
+                    $valueAr = [];
+                    if(isset($row->arRes[$fieldCode][0]['VALUE'])){
+                        foreach($row->arRes[$fieldCode] as $v){
+                            if($v['VALUE']){
+                                $valueAr[] = $v['VALUE'];
+                            }
+                        }
+                    }
+                    $row->AddViewField($fieldCode, implode(", ",$valueAr));
                 }
             }
             if($fieldData['type'] == 'crm_entity'){
@@ -882,8 +898,8 @@ class Helper {
                         $row->AddCheckField($fieldCode);
                     }else{
                         $label = $row->arRes[$fieldCode];
-                        if($label == 0) $label = ($fieldData['settings']['LABEL'][0]) ?? 'нет';
-                        if($label == 1) $label = ($fieldData['settings']['LABEL'][1]) ?? 'да';
+                        if($label == 0) $label = ($fieldData['settings']['LABEL'][0]) ?? Loc::getMessage('AWZ_ADMIN_HELPER_NO');
+                        if($label == 1) $label = ($fieldData['settings']['LABEL'][1]) ?? Loc::getMessage('AWZ_ADMIN_HELPER_YES');
                         $row->AddViewField($fieldCode,$label);
                         if(!$fieldData['isReadOnly']) {
                             $row->AddEditField($fieldCode, '<label>' . $fieldData['settings']['LABEL_CHECKBOX'] . '</label><input type="checkbox" id="' . htmlspecialcharsbx($fieldCode) . '_control" name="' . htmlspecialcharsbx($fieldCode) . '" value="Y" ' . ($row->arRes[$fieldCode] == '1' || $row->arRes[$fieldCode] === true ? ' checked' : '') . '>');
@@ -1204,7 +1220,7 @@ class Helper {
 
         $gridOptions = explode('__',$grid);
         if(empty($gridOptions)){
-            $result->addError(new \Bitrix\Main\Error("Идентификатор грида не верный"));
+            $result->addError(new \Bitrix\Main\Error(Loc::getMessage('AWZ_ADMIN_HELPER_GRID_ERR')));
         }
 
         $gridOptionsAr = [];
@@ -1220,7 +1236,7 @@ class Helper {
             }
         }
         if(empty($gridOptionsAr)){
-            $result->addError(new \Bitrix\Main\Error("Параметры грида не найдены"));
+            $result->addError(new \Bitrix\Main\Error(Loc::getMessage('AWZ_ADMIN_HELPER_GRID_ERR_PARAM')));
         }else{
             $result->setData(['options'=>$gridOptionsAr]);
         }

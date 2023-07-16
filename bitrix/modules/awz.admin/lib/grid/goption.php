@@ -2,11 +2,8 @@
 
 namespace Awz\Admin\Grid;
 
-use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Entity;
-use Bitrix\Main\Result;
-use Bitrix\Main\Type\DateTime;
 
 Loc::loadMessages(__FILE__);
 
@@ -38,23 +35,23 @@ class GOptionTable extends Entity\DataManager
             new Entity\IntegerField('ID', array(
                     'primary' => true,
                     'autocomplete' => false,
-                    'title' => Loc::getMessage('AWZ_BXAPI_CURRENCY_CURS_FIELD_ID')
+                    'title' => Loc::getMessage('AWZ_ADMIN_GOPTION_FIELD_ID')
                 )
             ),
             new Entity\StringField('CODE', array(
                     'required' => true,
-                    'title' => Loc::getMessage('AWZ_BXAPI_CURRENCY_CURS_FIELD_CODE')
+                    'title' => Loc::getMessage('AWZ_ADMIN_GOPTION_FIELD_CODE')
                 )
             ),
             new Entity\DatetimeField('UP_DATE', array(
                     'required' => true,
-                    'title' => Loc::getMessage('AWZ_BXAPI_CURRENCY_CURS_FIELD_CURS_DATE')
+                    'title' => Loc::getMessage('AWZ_ADMIN_GOPTION_FIELD_UP_DATE')
                 )
             ),
             new Entity\StringField('PRM', array(
                     'required' => true,
                     'serialized' => true,
-                    'title' => Loc::getMessage('AWZ_BXAPI_CURRENCY_CURS_FIELD_CODE')
+                    'title' => Loc::getMessage('AWZ_ADMIN_GOPTION_FIELD_PRM')
                 )
             ),
 

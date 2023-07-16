@@ -6,6 +6,9 @@ use Awz\Admin\Helper;
 use Bitrix\Main\Localization\Loc;
 use Awz\Admin\IForm;
 use Awz\Admin\IParams;
+use Bitrix\Main\Config\Option;
+use Bitrix\Main\Error;
+use Bitrix\Main\IO\File;
 
 Loc::loadMessages(__FILE__);
 
@@ -18,7 +21,7 @@ class Generator extends IForm implements IParams {
         $this->saved = false;
 
         $className = self::checkPath();
-        if($className instanceof \Bitrix\Main\Error){
+        if($className instanceof Error){
             $this->addError($className);
         }elseif($className){
             self::$entityName = $className;
@@ -35,67 +38,94 @@ class Generator extends IForm implements IParams {
     }
 
     public function add(){
-        if($_REQUEST['put_list_page']=='Y'){
+        $fileExistsErr = Loc::getMessage('AWZ_ADMIN_ADMINPAGES_GENERATOR_ERR_FILE1');
+        $activeTime = Option::get("awz.admin", "active", "", "");
+        $activeTimeGen = ($activeTime > time()) && ($activeTime < time()+60*60);
+        if(!$activeTimeGen){
+            $this->addError(new Error(Loc::getMessage('AWZ_ADMIN_ADMINPAGES_GENERATOR_ERR_DSBL')));
+            return;
+        }
+        if($_REQUEST['put_list_page']=='Y' && $activeTimeGen){
             $err = false;
             if(file_exists($_SERVER['DOCUMENT_ROOT'].$_REQUEST['bxAdminList'])){
-                $this->addError(new \Bitrix\Main\Error('файл уже существует '.$_REQUEST['bxAdminList']));
+                $this->addError(new Error($fileExistsErr.' '.$_REQUEST['bxAdminList']));
                 $err = true;
             }
             if(file_exists($_SERVER['DOCUMENT_ROOT'].$_REQUEST['moduleAdminList'])){
-                $this->addError(new \Bitrix\Main\Error('файл уже существует '.$_REQUEST['moduleAdminList']));
+                $this->addError(new Error($fileExistsErr.' '.$_REQUEST['moduleAdminList']));
                 $err = true;
             }
             if(file_exists($_SERVER['DOCUMENT_ROOT'].$_REQUEST['moduleAdminListClass'])){
-                $this->addError(new \Bitrix\Main\Error('файл уже существует '.$_REQUEST['moduleAdminListClass']));
+                $this->addError(new Error($fileExistsErr.' '.$_REQUEST['moduleAdminListClass']));
                 $err = true;
             }
             if(file_exists($_SERVER['DOCUMENT_ROOT'].$_REQUEST['moduleAdminListClassLang'])){
-                $this->addError(new \Bitrix\Main\Error('файл уже существует '.$_REQUEST['moduleAdminListClassLang']));
+                $this->addError(new Error($fileExistsErr.' '.$_REQUEST['moduleAdminListClassLang']));
                 $err = true;
             }
             if(!$err){
-                $file = new \Bitrix\Main\IO\File($_SERVER['DOCUMENT_ROOT'].$_REQUEST['bxAdminList']);
+                $file = new File($_SERVER['DOCUMENT_ROOT'].$_REQUEST['bxAdminList']);
                 $file->putContents($_REQUEST['bxAdminListContent']);
-                $file = new \Bitrix\Main\IO\File($_SERVER['DOCUMENT_ROOT'].$_REQUEST['moduleAdminList']);
+                $file = new File($_SERVER['DOCUMENT_ROOT'].$_REQUEST['moduleAdminList']);
                 $file->putContents($_REQUEST['moduleAdminListContent']);
-                $file = new \Bitrix\Main\IO\File($_SERVER['DOCUMENT_ROOT'].$_REQUEST['moduleAdminListClass']);
+                $file = new File($_SERVER['DOCUMENT_ROOT'].$_REQUEST['moduleAdminListClass']);
                 $file->putContents($_REQUEST['moduleAdminListClassContent']);
-                $file = new \Bitrix\Main\IO\File($_SERVER['DOCUMENT_ROOT'].$_REQUEST['moduleAdminListClassLang']);
+                $file = new File($_SERVER['DOCUMENT_ROOT'].$_REQUEST['moduleAdminListClassLang']);
                 $file->putContents($_REQUEST['moduleAdminListClassContentLang']);
-                $this->addOk('Файлы для списка созданы');
+                $this->addOk(Loc::getMessage('AWZ_ADMIN_ADMINPAGES_GENERATOR_OK_LIST'));
             }
         }
-        if($_REQUEST['put_edit_page']=='Y'){
+        if($_REQUEST['put_edit_page']=='Y' && $activeTimeGen){
             if(file_exists($_SERVER['DOCUMENT_ROOT'].$_REQUEST['bxAdminEdit'])){
-                $this->addError(new \Bitrix\Main\Error('файл уже существует '.$_REQUEST['bxAdminEdit']));
+                $this->addError(new Error($fileExistsErr.' '.$_REQUEST['bxAdminEdit']));
             }
             if(file_exists($_SERVER['DOCUMENT_ROOT'].$_REQUEST['moduleAdminEdit'])){
-                $this->addError(new \Bitrix\Main\Error('файл уже существует '.$_REQUEST['moduleAdminEdit']));
+                $this->addError(new Error($fileExistsErr.' '.$_REQUEST['moduleAdminEdit']));
             }
             if(file_exists($_SERVER['DOCUMENT_ROOT'].$_REQUEST['moduleAdminEditClass'])){
-                $this->addError(new \Bitrix\Main\Error('файл уже существует '.$_REQUEST['moduleAdminEditClass']));
+                $this->addError(new Error($fileExistsErr.' '.$_REQUEST['moduleAdminEditClass']));
             }
             if(file_exists($_SERVER['DOCUMENT_ROOT'].$_REQUEST['moduleAdminEditClassLang'])){
-                $this->addError(new \Bitrix\Main\Error('файл уже существует '.$_REQUEST['moduleAdminEditClassLang']));
+                $this->addError(new Error($fileExistsErr.' '.$_REQUEST['moduleAdminEditClassLang']));
             }
             if(!$err){
-                $file = new \Bitrix\Main\IO\File($_SERVER['DOCUMENT_ROOT'].$_REQUEST['bxAdminEdit']);
+                $file = new File($_SERVER['DOCUMENT_ROOT'].$_REQUEST['bxAdminEdit']);
                 $file->putContents($_REQUEST['bxAdminEditContent']);
-                $file = new \Bitrix\Main\IO\File($_SERVER['DOCUMENT_ROOT'].$_REQUEST['moduleAdminEdit']);
+                $file = new File($_SERVER['DOCUMENT_ROOT'].$_REQUEST['moduleAdminEdit']);
                 $file->putContents($_REQUEST['moduleAdminEditContent']);
-                $file = new \Bitrix\Main\IO\File($_SERVER['DOCUMENT_ROOT'].$_REQUEST['moduleAdminEditClass']);
+                $file = new File($_SERVER['DOCUMENT_ROOT'].$_REQUEST['moduleAdminEditClass']);
                 $file->putContents($_REQUEST['moduleAdminEditClassContent']);
-                $file = new \Bitrix\Main\IO\File($_SERVER['DOCUMENT_ROOT'].$_REQUEST['moduleAdminEditClassLang']);
+                $file = new File($_SERVER['DOCUMENT_ROOT'].$_REQUEST['moduleAdminEditClassLang']);
                 $file->putContents($_REQUEST['moduleAdminEditClassContentLang']);
-                $this->addOk('Файлы для редактирования элемента созданы');
+                $this->addOk(Loc::getMessage('AWZ_ADMIN_ADMINPAGES_GENERATOR_OK_EDIT'));
             }
         }
 
     }
 
     public function EntityDesc($arField){
+
+        $activeTime = Option::get("awz.admin", "active", "", "");
+        $activeTimeGen = ($activeTime > time()) && ($activeTime < time()+60*60);
+        if(!$activeTimeGen){
+            $this->addError(new Error(Loc::getMessage('AWZ_ADMIN_ADMINPAGES_GENERATOR_ERR_DSBL')));
+        }
+        if($activeTime > time()+60*60){?>
+            <p style="color:red;"><?=Loc::getMessage('AWZ_ADMIN_ADMINPAGES_GENERATOR_ERR_1')?></p>
+        <?}elseif($activeTime < time()){?>
+            <p style="color:red;"><?=Loc::getMessage('AWZ_ADMIN_ADMINPAGES_GENERATOR_ERR_2')?></p>
+        <?}?>
+        <?
+        if(!$activeTimeGen) {
+            ?>
+            <pre style="margin:0;"><?=Loc::getMessage('AWZ_ADMIN_ADMINPAGES_GENERATOR_ADD_CODE')?>:<br>\Bitrix\Main\Config\Option::set("awz.admin", "active", time()+30*60, "");</pre>
+            <a href="/bitrix/admin/php_command_line.php?lang=ru"><?=Loc::getMessage('AWZ_ADMIN_ADMINPAGES_GENERATOR_CMD_LINE')?></a>
+            <?
+            return;
+        }
+
         $path = $_SERVER['DOCUMENT_ROOT'].$_REQUEST['FIELD_ENTITY'];
-        $file = new \Bitrix\Main\IO\File($path);
+        $file = new File($path);
         $content = $file->getContents();
         if(preg_match('/namespace\s([0-9A-z]+)/is', $content, $match)){
             $nameSpace = $match[1];
@@ -112,10 +142,10 @@ class Generator extends IForm implements IParams {
         $bxAdminListContent .= 'require_once($_SERVER["DOCUMENT_ROOT"]."'.$moduleAdminList.'");';
         $bxAdminEditContent = '<?php'."\n";
         $bxAdminEditContent .= 'require_once($_SERVER["DOCUMENT_ROOT"]."'.$moduleAdminEdit.'");';
-        $tmp = new \Bitrix\Main\IO\File($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/awz.admin/templates/list.page');
+        $tmp = new File($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/awz.admin/templates/list.page');
         $moduleAdminListContent = $tmp->getContents();
         $moduleAdminListContent = str_replace('Awz\Admin\AdminPages\PageList',$nameSpace.'\\AdminPages\\'.str_replace('Table','',$entityClass).'List',$moduleAdminListContent);
-        $tmp = new \Bitrix\Main\IO\File($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/awz.admin/templates/edit.page');
+        $tmp = new File($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/awz.admin/templates/edit.page');
         $moduleAdminEditContent = $tmp->getContents();
         $moduleAdminEditContent = str_replace('Awz\Admin\AdminPages\PageItemEdit',$nameSpace.'\\AdminPages\\'.str_replace('Table','',$entityClass).'Edit',$moduleAdminEditContent);
 
@@ -149,7 +179,7 @@ class Generator extends IForm implements IParams {
         }
         $moduleAdminEditClassLang = implode('/',$langPath);
 
-        $tmp = new \Bitrix\Main\IO\File($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/awz.admin/templates/list_class.page');
+        $tmp = new File($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/awz.admin/templates/list_class.page');
         $moduleAdminListClassContent = $tmp->getContents();
         $moduleAdminListClassContent = str_replace(
             array(
@@ -164,7 +194,7 @@ class Generator extends IForm implements IParams {
             $moduleAdminListClassContent
         );
 
-        $tmp = new \Bitrix\Main\IO\File($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/awz.admin/templates/edit_class.page');
+        $tmp = new File($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/awz.admin/templates/edit_class.page');
         $moduleAdminEditClassContent = $tmp->getContents();
         $moduleAdminEditClassContent = str_replace(
             array(
@@ -180,7 +210,7 @@ class Generator extends IForm implements IParams {
             $moduleAdminEditClassContent
         );
 
-        $tmp = new \Bitrix\Main\IO\File($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/awz.admin/templates/list_class_lang.page');
+        $tmp = new File($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/awz.admin/templates/list_class_lang.page');
         $moduleAdminListClassContentLang = $tmp->getContents();
         $moduleAdminListClassContentLang = str_replace(
             '#LANG#',
@@ -188,7 +218,7 @@ class Generator extends IForm implements IParams {
             $moduleAdminListClassContentLang
         );
 
-        $tmp = new \Bitrix\Main\IO\File($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/awz.admin/templates/edit_class_lang.page');
+        $tmp = new File($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/awz.admin/templates/edit_class_lang.page');
         $moduleAdminEditClassContentLang = $tmp->getContents();
         $moduleAdminEditClassContentLang = str_replace(
             '#LANG#',
@@ -203,49 +233,50 @@ class Generator extends IForm implements IParams {
         $moduleAdminEditClass = implode('/',$temp);
 
         ?>
-        <p><b>Языковой код для списка</b>: <?=$langCodeList?></p>
-        <p><b>Языковой код для редактирования</b>: <?=$langCodeEdit?></p>
-        <p><b>Класс</b>: <?='\\'.$nameSpace.'\\'.$entityClass?></p>
-        <p><b>Модуль</b>: <?=$moduleName?></p>
 
-        <h2>Страница списка:</h2>
-        <h3>1. Файл в admin</h3>
+        <p><b><?=Loc::getMessage('AWZ_ADMIN_ADMINPAGES_GENERATOR_LIST_LANG_CODE')?></b>: <?=$langCodeList?></p>
+        <p><b><?=Loc::getMessage('AWZ_ADMIN_ADMINPAGES_GENERATOR_EDIT_LANG_CODE')?></b>: <?=$langCodeEdit?></p>
+        <p><b><?=Loc::getMessage('AWZ_ADMIN_ADMINPAGES_GENERATOR_CLASS')?></b>: <?='\\'.$nameSpace.'\\'.$entityClass?></p>
+        <p><b><?=Loc::getMessage('AWZ_ADMIN_ADMINPAGES_GENERATOR_MODULE')?></b>: <?=$moduleName?></p>
+
+        <h2><?=Loc::getMessage('AWZ_ADMIN_ADMINPAGES_GENERATOR_LIST_PAGE_LABEL')?>:</h2>
+        <h3>1. <?=Loc::getMessage('AWZ_ADMIN_ADMINPAGES_GENERATOR_FILE_PATH')?> admin</h3>
         <p><input type="text" size="70" name="bxAdminList" value="<?=($_REQUEST['bxAdminList'] ? $_REQUEST['bxAdminList'] : $bxAdminList)?>"></p>
-        <h3>Содержимое</h3>
+        <h3><?=Loc::getMessage('AWZ_ADMIN_ADMINPAGES_GENERATOR_FILE_PATH_CONTENT')?></h3>
         <p><textarea cols="90" name="bxAdminListContent" rows="3"><?=($_REQUEST['bxAdminListContent'] ? $_REQUEST['bxAdminListContent'] : $bxAdminListContent)?></textarea></p>
-        <h3>2. Файл в admin модуля</h3>
+        <h3>2. <?=Loc::getMessage('AWZ_ADMIN_ADMINPAGES_GENERATOR_FILE_PATH')?> admin <?=Loc::getMessage('AWZ_ADMIN_ADMINPAGES_GENERATOR_FILE_PATH_MODULE')?></h3>
         <p><input type="text" size="70" name="moduleAdminList" value="<?=($_REQUEST['moduleAdminList'] ? $_REQUEST['moduleAdminList'] : $moduleAdminList)?>"></p>
-        <h3>Содержимое</h3>
+        <h3><?=Loc::getMessage('AWZ_ADMIN_ADMINPAGES_GENERATOR_FILE_PATH_CONTENT')?></h3>
         <p><textarea cols="90" name="moduleAdminListContent" rows="30"><?=($_REQUEST['moduleAdminListContent'] ? $_REQUEST['moduleAdminListContent'] : $moduleAdminListContent)?></textarea></p>
-        <h3>3. Путь к классу с параметрами страницы</h3>
+        <h3>3. <?=Loc::getMessage('AWZ_ADMIN_ADMINPAGES_GENERATOR_FILE_PATH_PRM')?></h3>
         <p><input type="text" size="70" name="moduleAdminListClass" value="<?=($_REQUEST['moduleAdminListClass'] ? $_REQUEST['moduleAdminListClass'] : $moduleAdminListClass)?>"></p>
         <p><textarea cols="90" name="moduleAdminListClassContent" rows="30"><?=($_REQUEST['moduleAdminListClassContent'] ? $_REQUEST['moduleAdminListClassContent'] : $moduleAdminListClassContent)?></textarea></p>
-        <h3>4. Путь к языковому файлу с параметрами страницы</h3>
+        <h3>4. <?=Loc::getMessage('AWZ_ADMIN_ADMINPAGES_GENERATOR_FILE_PATH_PRM_LANG')?></h3>
         <p><input type="text" size="70" name="moduleAdminListClassLang" value="<?=($_REQUEST['moduleAdminListClassLang'] ? $_REQUEST['moduleAdminListClassLang'] : $moduleAdminListClassLang)?>"></p>
         <p><textarea cols="90" name="moduleAdminListClassContentLang" rows="3"><?=($_REQUEST['moduleAdminListClassContentLang'] ? $_REQUEST['moduleAdminListClassContentLang'] : $moduleAdminListClassContentLang)?></textarea></p>
         <p style="padding:10px;margin:10px 0;border:1px solid #000000;">
             <input type="checkbox" name="put_list_page" value="Y"/><br><br>
-            Отметьте чекбокс для записи файлов страницы списка генератором и нажмите сохранить
+            <?=Loc::getMessage('AWZ_ADMIN_ADMINPAGES_GENERATOR_LIST_PAGE_DESC')?>
         </p>
 
-        <h2>Страница Элемента:</h2>
-        <h3>1. Файл в admin</h3>
+        <h2><?=Loc::getMessage('AWZ_ADMIN_ADMINPAGES_GENERATOR_EDIT_PAGE_LABEL')?>:</h2>
+        <h3>1. <?=Loc::getMessage('AWZ_ADMIN_ADMINPAGES_GENERATOR_FILE_PATH')?> admin</h3>
         <p><input type="text" size="70" name="bxAdminEdit" value="<?=($_REQUEST['bxAdminEdit'] ? $_REQUEST['bxAdminEdit'] : $bxAdminEdit)?>"></p>
-        <h3>Содержимое</h3>
+        <h3><?=Loc::getMessage('AWZ_ADMIN_ADMINPAGES_GENERATOR_FILE_PATH_CONTENT')?></h3>
         <p><textarea cols="90" name="bxAdminEditContent" rows="3"><?=($_REQUEST['bxAdminEditContent'] ? $_REQUEST['bxAdminEditContent'] : $bxAdminEditContent)?></textarea></p>
-        <h3>2. Файл в admin модуля</h3>
+        <h3>2. <?=Loc::getMessage('AWZ_ADMIN_ADMINPAGES_GENERATOR_FILE_PATH')?> admin <?=Loc::getMessage('AWZ_ADMIN_ADMINPAGES_GENERATOR_FILE_PATH_MODULE')?></h3>
         <p><input type="text" size="70" name="moduleAdminEdit" value="<?=($_REQUEST['moduleAdminEdit'] ? $_REQUEST['moduleAdminEdit'] : $moduleAdminEdit)?>"></p>
-        <h3>Содержимое</h3>
+        <h3><?=Loc::getMessage('AWZ_ADMIN_ADMINPAGES_GENERATOR_FILE_PATH_CONTENT')?></h3>
         <p><textarea cols="90" name="moduleAdminEditContent" rows="30"><?=($_REQUEST['moduleAdminEditContent'] ? $_REQUEST['moduleAdminEditContent'] : $moduleAdminEditContent)?></textarea></p>
-        <h3>3. Путь к классу с параметрами страницы</h3>
+        <h3>3. <?=Loc::getMessage('AWZ_ADMIN_ADMINPAGES_GENERATOR_FILE_PATH_PRM')?></h3>
         <p><input type="text" size="70" name="moduleAdminEditClass" value="<?=($_REQUEST['moduleAdminEditClass'] ? $_REQUEST['moduleAdminEditClass'] : $moduleAdminEditClass)?>"></p>
         <p><textarea cols="90" name="moduleAdminEditClassContent" rows="30"><?=($_REQUEST['moduleAdminEditClassContent'] ? $_REQUEST['moduleAdminEditClassContent'] : $moduleAdminEditClassContent)?></textarea></p>
-        <h3>4. Путь к языковому файлу с параметрами страницы</h3>
+        <h3>4. <?=Loc::getMessage('AWZ_ADMIN_ADMINPAGES_GENERATOR_FILE_PATH_PRM_LANG')?></h3>
         <p><input type="text" size="70" name="moduleAdminEditClassLang" value="<?=($_REQUEST['moduleAdminEditClassLang'] ? $_REQUEST['moduleAdminEditClassLang'] : $moduleAdminEditClassLang)?>"></p>
         <p><textarea cols="90" name="moduleAdminEditClassContentLang" rows="3"><?=($_REQUEST['moduleAdminEditClassContentLang'] ? $_REQUEST['moduleAdminEditClassContentLang'] : $moduleAdminEditClassContentLang)?></textarea></p>
         <p style="padding:10px;margin:10px 0;border:1px solid #000000;">
             <input type="checkbox" name="put_edit_page" value="Y"/><br><br>
-            Отметьте чекбокс для записи файлов страницы редактирования генератором и нажмите сохранить
+            <?=Loc::getMessage('AWZ_ADMIN_ADMINPAGES_GENERATOR_EDIT_PAGE_DESC')?>
         </p>
 
         <?php
@@ -253,21 +284,22 @@ class Generator extends IForm implements IParams {
     }
 
     public static function checkPath(){
+
         if($_REQUEST['FIELD_ENTITY']){
             $path = $_SERVER['DOCUMENT_ROOT'].$_REQUEST['FIELD_ENTITY'];
-            $file = new \Bitrix\Main\IO\File($path);
+            $file = new File($path);
             if(!$file->isExists()){
-                return new \Bitrix\Main\Error('Файл не найден');
+                return new Error(Loc::getMessage('AWZ_ADMIN_ADMINPAGES_GENERATOR_ERR_FILE'));
             }else{
                 $content = $file->getContents();
                 if(preg_match('/class\s([0-9A-z]+)/is', $content, $match)){
                     $className = $match[1];
                     if(substr($className,-5) != 'Table'){
-                        return new \Bitrix\Main\Error('В названии класса нет Table');
+                        return new Error(Loc::getMessage('AWZ_ADMIN_ADMINPAGES_GENERATOR_ERR_TABLE'));
                     }
                     return $className;
                 }else{
-                    return new \Bitrix\Main\Error('Название класса не найдено в файле');
+                    return new Error(Loc::getMessage('AWZ_ADMIN_ADMINPAGES_GENERATOR_ERR_CLASS'));
                 }
             }
         }
@@ -281,7 +313,7 @@ class Generator extends IForm implements IParams {
     public static function getParams(): array
     {
         $className = self::checkPath();
-        if(!$className || ($className instanceof \Bitrix\Main\Error)){
+        if(!$className || ($className instanceof Error)){
             $fieldEntity = array(
                 "NAME"=>"ENTITY",
                 "TYPE"=>"FILE_DIALOG",

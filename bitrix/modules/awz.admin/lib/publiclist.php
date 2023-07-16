@@ -168,8 +168,8 @@ class PublicList extends \CAdminUiList
     {
         ob_start();
         ?>
-        <div><?= GetMessage("admin_lib_list_all_title").": " ?>
-            <a id="<?=$this->table_id?>_show_total_count" href="#"><?= GetMessage("admin_lib_list_show_row_count_title")?></a>
+        <div><?= Loc::getMessage("admin_lib_list_all_title").": " ?>
+            <a id="<?=$this->table_id?>_show_total_count" href="#"><?= Loc::getMessage("admin_lib_list_show_row_count_title")?></a>
         </div>
         <?
         return ob_get_clean();
@@ -442,9 +442,9 @@ class PublicList extends \CAdminUiList
                     {
                         case "checkbox":
                             if ($value == "Y")
-                                $value = htmlspecialcharsex(GetMessage("admin_lib_list_yes"));
+                                $value = htmlspecialcharsex(Loc::getMessage("admin_lib_list_yes"));
                             else
-                                $value = htmlspecialcharsex(GetMessage("admin_lib_list_no"));
+                                $value = htmlspecialcharsex(Loc::getMessage("admin_lib_list_no"));
                             break;
                         case "select":
                             if (isset($field["edit"]["values"][$value]))

@@ -272,27 +272,18 @@ class IForm {
 	public function setContextMenu(){
 		
 		$arContext['btn_list'] = array(
-					'TEXT'	=> GetMessage('MAIN_ADMIN_MENU_LIST'),
+					'TEXT'	=> Loc::getMessage('MAIN_ADMIN_MENU_LIST'),
 					'LINK'	=> $this->getParam("LIST_URL").$this->getParam("MODIF").'lang='.LANG,
 					'ICON'	=> 'btn_list');
-		//$link = DeleteParam(array("mode"));
-		/*$link = $this->getParam("EDIT_URL").$this->getParam("MODIF")."mode=settings";
-		$arContext['btn_settings'] = array(
-			  "TEXT"=>GetMessage("IBEL_E_SETTINGS"),
-			  "TITLE"=>GetMessage("IBEL_E_SETTINGS_TITLE"),
-			  "LINK"=>"javascript:"."tabControl".toLower($this->getParam("LANG_CODE")).".ShowSettings('".urlencode($link)."')",
-			  "ICON"=>"btn_settings",
-		);
-		*/
 		if ($this->getParam("ID") !== false) {
 			$arContext['btn_new'] = array(
-						'TEXT'	=> GetMessage('MAIN_ADMIN_MENU_ADD'),
+						'TEXT'	=> Loc::getMessage('MAIN_ADMIN_MENU_ADD'),
 						'LINK'	=> $this->getParam("EDIT_URL").$this->getParam("MODIF").'lang='.LANG,
 						'ICON'	=> 'btn_new',
 						);
 			$arContext['btn_delete'] = array(
-						'TEXT'	=> GetMessage('MAIN_ADMIN_MENU_DELETE'),
-						'LINK'	=> 'javascript:if(confirm(\''.GetMessage('MAIN_ADMIN_MENU_DELETE').'?\'))'.
+						'TEXT'	=> Loc::getMessage('MAIN_ADMIN_MENU_DELETE'),
+						'LINK'	=> 'javascript:if(confirm(\''.Loc::getMessage('MAIN_ADMIN_MENU_DELETE').'?\'))'.
 									'window.location=\''.$this->getParam("EDIT_URL").$this->getParam("MODIF").''.$this->getParam("PRIMARY").'='.$this->getParam("ID").
 									'&amp;action=delete&amp;'.bitrix_sessid_get().'&amp;lang='.LANG.'\';',
 						'ICON'	=> 'btn_delete',
@@ -608,8 +599,10 @@ class IForm {
 	
 	public function getFieldValue($name){
 
+        $defValue = isset($this->fieldsValues[$name]) ? $this->fieldsValues[$name] : "";
+
 		if(!$this->saved) {
-			return (isset($_REQUEST[$name])) ? $_REQUEST[$name] : "";
+			return (isset($_REQUEST[$name]) && array_key_exists($name, $_REQUEST)) ? $_REQUEST[$name] : $defValue;
 		}else{
 			return (isset($this->fieldsValues[$name])) ? $this->fieldsValues[$name] : "";
 		}
