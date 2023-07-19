@@ -1,7 +1,6 @@
 # AWZ: Конструктор списков (awz.admin)
 
 ### [Установка модуля](https://github.com/zahalski/awz.admin/tree/main/docs/install.md)
-### [Настройка модуля](https://github.com/zahalski/awz.admin/tree/main/docs/settings.md)
 
 <!-- desc-start -->
 
