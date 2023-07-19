@@ -25,6 +25,13 @@ if(Loader::includeModule($module_id) && Option::get($module_id, "ACTIVE_GEN", ""
                 "more_url" => Array(""),
                 "title" => Loc::getMessage('AWZ_ADMIN_MENU_NAME_MENU1'),
                 "sort" => 100,
+            ),
+            array(
+                "text" => Loc::getMessage('AWZ_ADMIN_MENU_NAME_MENU2'),
+                "url" => "awz_admin_gens_list.php?lang=".LANGUAGE_ID,
+                "more_url" => Array("awz_admin_gens_edit.php?lang=".LANGUAGE_ID),
+                "title" => Loc::getMessage('AWZ_ADMIN_MENU_NAME_MENU2'),
+                "sort" => 120,
             )
         ),
     );

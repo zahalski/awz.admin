@@ -1,0 +1,6 @@
+<?php
+$MESS["AWZ_ADMIN_GENS_FIELD_ID"] = "Ид";
+$MESS["AWZ_ADMIN_GENS_FIELD_NAME"] = "Название";
+$MESS["AWZ_ADMIN_GENS_FIELD_ADM_LINK"] = "Ссылка";
+$MESS["AWZ_ADMIN_GENS_FIELD_ADD_DATE"] = "Дата генерации";
+$MESS["AWZ_ADMIN_GENS_FIELD_PRM"] = "Параметры";

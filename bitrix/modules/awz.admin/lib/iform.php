@@ -195,9 +195,9 @@ class IForm {
 			if(!empty($errors)) $this->messages[] = array("MESSAGE"=>implode("; ",$errors), "TYPE"=>"ERROR");
 			if($this->getParam("ID")){
 				if (strlen($save)) {
-					if(empty($errors)) LocalRedirect($this->getParam("LIST_URL").$this->getParam("MODIF").'lang='.LANG);
+					if(empty($this->messages)) LocalRedirect($this->getParam("LIST_URL").$this->getParam("MODIF").'lang='.LANG);
 				} else {
-					if(empty($errors)) LocalRedirect($this->getParam("EDIT_URL").$this->getParam("MODIF").''.$this->getParam("PRIMARY").'='.$this->getParam("ID").'&lang='.LANG);
+					if(empty($this->messages)) LocalRedirect($this->getParam("EDIT_URL").$this->getParam("MODIF").''.$this->getParam("PRIMARY").'='.$this->getParam("ID").'&lang='.LANG);
 				}
 			}else{
 				$this->saved = false;

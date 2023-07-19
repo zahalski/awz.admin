@@ -3,6 +3,8 @@
 namespace Awz\Admin\AdminPages;
 
 use Awz\Admin\Helper;
+use Awz\Admin\GensTable;
+use Bitrix\Main\Application;
 use Bitrix\Main\Localization\Loc;
 use Awz\Admin\IForm;
 use Awz\Admin\IParams;
@@ -45,6 +47,7 @@ class Generator extends IForm implements IParams {
             $this->addError(new Error(Loc::getMessage('AWZ_ADMIN_ADMINPAGES_GENERATOR_ERR_DSBL')));
             return;
         }
+
         if($_REQUEST['put_list_page']=='Y' && $activeTimeGen){
             $err = false;
             if(file_exists($_SERVER['DOCUMENT_ROOT'].$_REQUEST['bxAdminList'])){
@@ -73,6 +76,21 @@ class Generator extends IForm implements IParams {
                 $file = new File($_SERVER['DOCUMENT_ROOT'].$_REQUEST['moduleAdminListClassLang']);
                 $file->putContents($_REQUEST['moduleAdminListClassContentLang']);
                 $this->addOk(Loc::getMessage('AWZ_ADMIN_ADMINPAGES_GENERATOR_OK_LIST'));
+
+                GensTable::add([
+                    'NAME'=>'LIST - '.$entityClass = self::$entityName,
+                    'ADM_LINK'=>$_REQUEST['bxAdminList'],
+                    'ADD_DATE'=>\Bitrix\Main\Type\DateTime::createFromTimestamp(time()),
+                    'PRM'=>[
+                        'files'=>[
+                                'admin'=>$_REQUEST['bxAdminList'],
+                                'module_admin'=>$_REQUEST['moduleAdminList'],
+                                'logic'=>$_REQUEST['moduleAdminListClass'],
+                                'lang'=>$_REQUEST['moduleAdminListClassLang'],
+                        ]
+                    ]
+                ]);
+
             }
         }
         if($_REQUEST['put_edit_page']=='Y' && $activeTimeGen){
@@ -98,6 +116,20 @@ class Generator extends IForm implements IParams {
                 $file = new File($_SERVER['DOCUMENT_ROOT'].$_REQUEST['moduleAdminEditClassLang']);
                 $file->putContents($_REQUEST['moduleAdminEditClassContentLang']);
                 $this->addOk(Loc::getMessage('AWZ_ADMIN_ADMINPAGES_GENERATOR_OK_EDIT'));
+
+                GensTable::add([
+                    'NAME'=>'EDIT - '.$entityClass = self::$entityName,
+                    'ADM_LINK'=>$_REQUEST['bxAdminEdit'],
+                    'ADD_DATE'=>\Bitrix\Main\Type\DateTime::createFromTimestamp(time()),
+                    'PRM'=>[
+                        'files'=>[
+                            'admin'=>$_REQUEST['bxAdminEdit'],
+                            'module_admin'=>$_REQUEST['moduleAdminEdit'],
+                            'logic'=>$_REQUEST['moduleAdminEditClass'],
+                            'lang'=>$_REQUEST['moduleAdminEditClassLang'],
+                        ]
+                    ]
+                ]);
             }
         }
 
@@ -210,7 +242,11 @@ class Generator extends IForm implements IParams {
             $moduleAdminEditClassContent
         );
 
-        $tmp = new File($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/awz.admin/templates/list_class_lang.page');
+        $addLang = 'lang.page';
+        if(!Application::isUtfMode()){
+            $addLang = 'lang_cp.page';
+        }
+        $tmp = new File($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/awz.admin/templates/list_class_'.$addLang);
         $moduleAdminListClassContentLang = $tmp->getContents();
         $moduleAdminListClassContentLang = str_replace(
             '#LANG#',
@@ -218,7 +254,7 @@ class Generator extends IForm implements IParams {
             $moduleAdminListClassContentLang
         );
 
-        $tmp = new File($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/awz.admin/templates/edit_class_lang.page');
+        $tmp = new File($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/awz.admin/templates/edit_class_'.$addLang);
         $moduleAdminEditClassContentLang = $tmp->getContents();
         $moduleAdminEditClassContentLang = str_replace(
             '#LANG#',
