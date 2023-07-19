@@ -1,0 +1,3 @@
+<?php
+$MESS['#LANG#TITLE'] = 'Мой элемент';
+$MESS['#LANG#EDIT1'] = 'Мой главный таб';
