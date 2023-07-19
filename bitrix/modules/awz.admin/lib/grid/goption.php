@@ -31,30 +31,44 @@ class GOptionTable extends Entity\DataManager
 
     public static function getMap()
     {
-        return array(
-            new Entity\IntegerField('ID', array(
+        return [
+            new Entity\IntegerField('ID', [
                     'primary' => true,
                     'autocomplete' => false,
                     'title' => Loc::getMessage('AWZ_ADMIN_GOPTION_FIELD_ID')
-                )
+                ]
             ),
-            new Entity\StringField('CODE', array(
+            new Entity\StringField('CODE', [
                     'required' => true,
                     'title' => Loc::getMessage('AWZ_ADMIN_GOPTION_FIELD_CODE')
-                )
+                ]
             ),
-            new Entity\DatetimeField('UP_DATE', array(
+            new Entity\DatetimeField('UP_DATE', [
                     'required' => true,
                     'title' => Loc::getMessage('AWZ_ADMIN_GOPTION_FIELD_UP_DATE')
-                )
+                ]
             ),
-            new Entity\StringField('PRM', array(
+            new Entity\StringField('PRM', [
                     'required' => true,
-                    'serialized' => true,
-                    'title' => Loc::getMessage('AWZ_ADMIN_GOPTION_FIELD_PRM')
-                )
+                    //'serialized' => true,
+                    'title' => Loc::getMessage('AWZ_ADMIN_GOPTION_FIELD_PRM'),
+                    'save_data_modification' => function(){
+                        return [
+                            function ($value) {
+                                return serialize($value);
+                            }
+                        ];
+                    },
+                    'fetch_data_modification' => function(){
+                        return [
+                            function ($value) {
+                                return unserialize($value, ["allowed_classes" => false]);
+                            }
+                        ];
+                    },
+                ]
             ),
 
-        );
+        ];
     }
 }
