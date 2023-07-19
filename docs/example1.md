@@ -136,4 +136,75 @@ public function trigerGetRowListAdmin($row){
 
 ### 2.5. Страница списка готова
 
+```php
+# полный код готовой страницы с модуля примера
+# /bitrix/modules/awz.flashcallapi/lib/adminpages/codeslist.php 
+
+namespace Awz\FlashCallApi\AdminPages;
+
+use Bitrix\Main\Localization\Loc;
+use Awz\Admin\IList;
+use Awz\Admin\IParams;
+use Awz\Admin\Helper;
+
+Loc::loadMessages(__FILE__);
+
+class CodesList extends IList implements IParams {
+
+    public function __construct($params){
+        parent::__construct($params);
+    }
+
+    public function trigerGetRowListAdmin($row){
+        Helper::viewListField($row, 'ID', ['type'=>'entity_link'], $this);
+        Helper::editListField($row, 'PHONE', ['type'=>'string'], $this);
+        Helper::editListField($row, 'EXT_ID', ['type'=>'string'], $this);
+        Helper::editListField($row, 'CREATE_DATE', ['type'=>'datetime'], $this);
+
+        $params = [];
+        if(!empty($row->arRes['PRM']) && is_array($row->arRes['PRM'])){
+            foreach($row->arRes['PRM'] as $code=>$val){
+                $params[] = '<b><i>'.$code.'</i></b>: '.$val;
+            }
+
+        }
+        $row->AddViewField('PRM',"<b>Параметры</b>:<br>".implode('<br>', $params));
+    }
+
+    public function trigerInitFilter(){
+    }
+
+    public function trigerGetRowListActions(array $actions): array
+    {
+        return $actions;
+    }
+
+    public static function getTitle(): string
+    {
+        return Loc::getMessage('AWZ_FLASHCALLAPI_CODES_LIST_TITLE');
+    }
+
+    public static function getParams(): array
+    {
+        $arParams = [
+            "ENTITY" => "\\Awz\\FlashCallApi\\CodesTable",
+            "FILE_EDIT"=>"awz_flashcallapi_codes_edit.php",
+            "BUTTON_CONTEXTS"=>[
+                'btn_new'=>[
+                    'TEXT'=> "Добавить код",
+                    'ICON'	=> 'btn_new',
+                    'LINK'	=> 'awz_flashcallapi_codes_edit.php?lang='.LANGUAGE_ID
+                ]
+            ],
+            "ADD_GROUP_ACTIONS"=>["edit","delete"],
+            "ADD_LIST_ACTIONS"=>["edit","delete"],
+            "FIND"=>[],
+            "FIND_FROM_ENTITY"=>['ID'=>[],'PHONE'=>[],'EXT_ID'=>[],'CREATE_DATE'=>[]]
+        ];
+        return $arParams;
+    }
+}
+
+```
+
 <!-- ex1-end -->

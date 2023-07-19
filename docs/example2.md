@@ -29,18 +29,18 @@
 
 public static function getParams(): array
 {
-    $arParams = array(
+    $arParams = [
         "ENTITY" => "\\Awz\\FlashCallApi\\CodesTable",
-        "BUTTON_CONTEXTS"=>array('btn_list'=>false),
+        "BUTTON_CONTEXTS"=>['btn_list'=>false],
         "LIST_URL"=>'/bitrix/admin/awz_flashcallapi_codes_list.php',
-        "TABS"=>array(
-            "edit1" => array(
+        "TABS"=>[
+            "edit1" => [
                 "NAME"=>Loc::getMessage('AWZ_FLASHCALLAPI_CODES_EDIT_EDIT1'),
-                "FIELDS" => array(
-                )
-            )
-        )
-    );
+                "FIELDS" => [
+                ]
+            ]
+        ]
+    ];
     return $arParams;
 }
 
@@ -59,21 +59,21 @@ public static function getParams(): array
 
 public static function getParams(): array
 {
-    $arParams = array(
+    $arParams = [
         "ENTITY" => "\\Awz\\FlashCallApi\\CodesTable",
-        "BUTTON_CONTEXTS"=>array('btn_list'=>false),
+        "BUTTON_CONTEXTS"=>['btn_list'=>false],
         "LIST_URL"=>'/bitrix/admin/awz_flashcallapi_codes_list.php',
-        "TABS"=>array(
-            "edit1" => array(
+        "TABS"=>[
+            "edit1" => [
                 "NAME"=>Loc::getMessage('AWZ_FLASHCALLAPI_CODES_EDIT_EDIT1'),
-                "FIELDS" => array(
+                "FIELDS" => [
                     "PHONE",
                     "EXT_ID",
                     "CREATE_DATE"
-                )
-            )
-        )
-    );
+                ]
+            ]
+        ]
+    ];
     return $arParams;
 }
 
@@ -99,13 +99,13 @@ class CodesTable extends Entity\DataManager
         $result = new Entity\EventResult;
         if(isset($fields['CREATE_DATE'])){
             if(!$fields['CREATE_DATE']){
-                $result->modifyFields(array(
+                $result->modifyFields([
                     'CREATE_DATE'=>\Bitrix\Main\Type\DateTime::createFromTimestamp(time())
-                ));
+                ]);
             }elseif(is_string($fields['CREATE_DATE'])){
-                $result->modifyFields(array(
+                $result->modifyFields([
                     'CREATE_DATE'=>\Bitrix\Main\Type\DateTime::createFromTimestamp(strtotime($fields['CREATE_DATE']))
-                ));
+                ]);
             }
         }
         return $result;
@@ -116,13 +116,13 @@ class CodesTable extends Entity\DataManager
         $result = new Entity\EventResult;
         if(isset($fields['CREATE_DATE'])){
             if(!$fields['CREATE_DATE']){
-                $result->modifyFields(array(
+                $result->modifyFields([
                     'CREATE_DATE'=>\Bitrix\Main\Type\DateTime::createFromTimestamp(time())
-                ));
+                ]);
             }elseif(is_string($fields['CREATE_DATE'])){
-                $result->modifyFields(array(
+                $result->modifyFields([
                     'CREATE_DATE'=>\Bitrix\Main\Type\DateTime::createFromTimestamp(strtotime($fields['CREATE_DATE']))
-                ));
+                ]);
             }
         }
         return $result;
@@ -158,14 +158,14 @@ public function paramsFieldView($arField){
 
 public static function getParams(): array
 {
-    $arParams = array(
+    $arParams = [
         "ENTITY" => "\\Awz\\FlashCallApi\\CodesTable",
-        "BUTTON_CONTEXTS"=>array('btn_list'=>false),
+        "BUTTON_CONTEXTS"=>['btn_list'=>false],
         "LIST_URL"=>'/bitrix/admin/awz_flashcallapi_codes_list.php',
-        "TABS"=>array(
-            "edit1" => array(
+        "TABS"=>[
+            "edit1" => [
                 "NAME"=>Loc::getMessage('AWZ_FLASHCALLAPI_CODES_EDIT_EDIT1'),
-                "FIELDS" => array(
+                "FIELDS" => [
                     "PHONE",
                     "EXT_ID",
                     "CREATE_DATE",
@@ -174,15 +174,93 @@ public static function getParams(): array
                         "NAME"=>"PRM",
                         "FUNC_VIEW"=>"paramsFieldView"
                     ]
-                )
-            )
-        )
-    );
+                ]
+            ]
+        ]
+    ];
     return $arParams;
 }
 
 ```
 
 ## 2.5. Базовая страница редактирования элемента готова
+
+```php
+# полный код готовой страницы с модуля примера
+# /bitrix/modules/awz.flashcallapi/lib/adminpages/codesedit.php
+
+namespace Awz\FlashCallApi\AdminPages;
+
+use Awz\Admin\Helper;
+use Bitrix\Main\Localization\Loc;
+use Awz\Admin\IForm;
+use Awz\Admin\IParams;
+
+Loc::loadMessages(__FILE__);
+
+class CodesEdit extends IForm implements IParams {
+
+    public function __construct($params){
+        parent::__construct($params);
+    }
+
+    public function trigerCheckActionAdd($func){
+        return $func;
+    }
+
+    public function trigerCheckActionUpdate($func){
+        return $func;
+    }
+
+    public static function getTitle(): string
+    {
+        return Loc::getMessage('AWZ_FLASHCALLAPI_CODES_EDIT_TITLE');
+    }
+
+    public function paramsFieldView($arField){
+        $valueField = $this->getFieldValue($arField['NAME']);
+        if(!is_array($valueField)){
+            $valueField = [
+                'param1'=>"",
+                'param2'=>"",
+            ];
+        }
+        ?>
+        <?foreach($valueField as $code=>$v){?>
+            <p>
+                <?=$code?>:
+                <input type="text" name="<?=$arField['NAME']?>[<?=$code?>]" value="<?=$valueField[$code]?>">
+            </p>
+        <?}?>
+        <?php
+    }
+
+    public static function getParams(): array
+    {
+        $arParams = [
+            "ENTITY" => "\\Awz\\FlashCallApi\\CodesTable",
+            "BUTTON_CONTEXTS"=>['btn_list'=>false],
+            "LIST_URL"=>'/bitrix/admin/awz_flashcallapi_codes_list.php',
+            "TABS"=>[
+                "edit1" => [
+                    "NAME"=>Loc::getMessage('AWZ_FLASHCALLAPI_CODES_EDIT_EDIT1'),
+                    "FIELDS" => [
+                        "PHONE",
+                        "EXT_ID",
+                        "CREATE_DATE",
+                        "PRM"=>[
+                            "TYPE"=>"CUSTOM",
+                            "NAME"=>"PRM",
+                            "FUNC_VIEW"=>"paramsFieldView"
+                        ]
+                    ]
+                ]
+            ]
+        ];
+        return $arParams;
+    }
+}
+
+```
 
 <!-- ex2-end -->
