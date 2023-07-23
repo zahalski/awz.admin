@@ -871,6 +871,13 @@ class Helper {
                     $row->AddViewField($fieldCode, $row->arRes[$fieldCode]);
                 }
             }
+            if($fieldData['type'] == 'float'){
+                if(!$fieldData['isReadOnly']) {
+                    $row->AddInputField($fieldCode, array("size" => $fieldData['settings']['SIZE']));
+                }else{
+                    $row->AddViewField($fieldCode, $row->arRes[$fieldCode]);
+                }
+            }
             if($fieldData['type'] == 'integer'){
                 if(!$fieldData['isReadOnly']) {
                     $row->AddInputField($fieldCode, array("size" => $fieldData['settings']['SIZE']));

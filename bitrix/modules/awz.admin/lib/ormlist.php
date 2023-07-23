@@ -141,6 +141,12 @@ class OrmListTable extends ORM\Data\DataManager
                     )
                 ));
             }
+            if($field['type'] == 'float'){
+                $fieldOrm = (new ORM\Fields\FloatField($key, array(
+                        'title' => $field['title']
+                    )
+                ));
+            }
             if($fieldOrm && $field['isRequired']){
                 $fieldOrm->configureRequired();
             }
