@@ -111,6 +111,12 @@ class OrmListTable extends ORM\Data\DataManager
                     )
                 ))->configureValues($field['values']);
             }
+            if($field['type'] == 'boolean' && !empty($field['values'])){
+                $fieldOrm = (new ORM\Fields\EnumField($key, array(
+                        'title' => $field['title']
+                    )
+                ))->configureValues($field['values']);
+            }
             if($field['type'] == 'crm_status' && !empty($field['values'])){
                 $fieldOrm = (new ORM\Fields\EnumField($key, array(
                         'title' => $field['title']

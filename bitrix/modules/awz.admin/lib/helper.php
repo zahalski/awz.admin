@@ -856,12 +856,18 @@ class Helper {
                     }
 
                 }
+                if(isset($fieldData['values'][$row->arRes[$fieldCode]]) && is_string($fieldData['values'][$row->arRes[$fieldCode]])){
+                    $row->AddViewField($fieldCode, $fieldData['values'][$row->arRes[$fieldCode]]);
+                }
             }
             if($fieldData['type'] == 'enumeration'){
                 if(!$fieldData['isReadOnly']) {
                     if(!isset($fieldData['values'][''])) $fieldData['values'][''] = '-';
                     if(!isset($fieldData['values'][$row->arRes[$fieldCode]])) $fieldData['values'][$row->arRes[$fieldCode]] = $row->arRes[$fieldCode];
                     $row->AddSelectField($fieldCode, $fieldData['values'], array("size" => $fieldData['settings']['SIZE']));
+                }
+                if(isset($fieldData['values'][$row->arRes[$fieldCode]]) && is_string($fieldData['values'][$row->arRes[$fieldCode]])){
+                    $row->AddViewField($fieldCode, $fieldData['values'][$row->arRes[$fieldCode]]);
                 }
             }
             if($fieldData['type'] == 'double'){
@@ -914,6 +920,9 @@ class Helper {
                     }
                 }else{
                     $row->AddViewField($fieldCode, $row->arRes[$fieldCode]);
+                }
+                if(isset($fieldData['values'][$row->arRes[$fieldCode]]) && is_string($fieldData['values'][$row->arRes[$fieldCode]])){
+                    $row->AddViewField($fieldCode, $fieldData['values'][$row->arRes[$fieldCode]]);
                 }
             }
             if($fieldData['type'] == 'url'){
