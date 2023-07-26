@@ -11,7 +11,7 @@ use Bitrix\Main\Type\DateTime;
 
 Loc::loadMessages(__FILE__);
 
-class ContactTable extends ORM\Data\DataManager
+class DealTable extends ORM\Data\DataManager
 {
     public static $fields;
 
@@ -64,6 +64,12 @@ class ContactTable extends ORM\Data\DataManager
                 ));
             }
             if($field['type'] == 'crm_deal'){
+                $fieldOrm = (new ORM\Fields\StringField($key, array(
+                        'title' => $field['title']
+                    )
+                ));
+            }
+            if($field['type'] == 'crm_company'){
                 $fieldOrm = (new ORM\Fields\StringField($key, array(
                         'title' => $field['title']
                     )
