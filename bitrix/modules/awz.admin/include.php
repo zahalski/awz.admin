@@ -16,10 +16,11 @@ $eventManager->addEventHandler('awz.admin', 'getPublicFilterOptions',
 
 class awzAdminHandlers {
 
-    public static function getAuth(){
+    public static function getAuth(string $key=""){
         $authData = array();
         $request = \Bitrix\Main\Application::getInstance()->getContext()->getRequest();
-        if($key = $request->get('key')){
+        if(!$key) $key = $request->get('key');
+        if($key){
             $keyAr = explode("|",$key);
             $startCount  = count($keyAr);
             if($startCount>=5 && \Bitrix\Main\Loader::includeModule('awz.bxapi')){

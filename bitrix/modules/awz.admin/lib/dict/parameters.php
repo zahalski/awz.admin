@@ -37,6 +37,11 @@ abstract class Parameters {
         return $this;
     }
 
+    public function getParameters()
+    {
+        return $this->params;
+    }
+
     /**
      * Set parameter from code
      *
@@ -88,5 +93,6 @@ abstract class Parameters {
     {
         return $this->setParameter($name, $value);
     }
+
 
 }

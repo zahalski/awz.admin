@@ -69,6 +69,12 @@ class OrmListTable extends ORM\Data\DataManager
                     )
                 ));
             }
+            if($field['type'] == 'crm_contact'){
+                $fieldOrm = (new ORM\Fields\StringField($key, array(
+                        'title' => $field['title']
+                    )
+                ));
+            }
             if($field['type'] == 'crm_multifield'){
                 $fieldOrm = (new ORM\Fields\StringField($key, array(
                         'title' => $field['title']

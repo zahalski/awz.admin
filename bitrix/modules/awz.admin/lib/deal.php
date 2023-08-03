@@ -51,19 +51,61 @@ class DealTable extends ORM\Data\DataManager
                     )
                 ));
             }
-            if($field['type'] == 'crm_lead'){
+            if($field['type'] == 'crm_entity'){
                 $fieldOrm = (new ORM\Fields\StringField($key, array(
-                        'title' => $field['title']
+                        'title' => $field['title'],
+                        'settings'=>$field['settings']
                     )
                 ));
             }
-            if($field['type'] == 'crm_company'){
+            if($field['type'] == 'crm'){
                 $fieldOrm = (new ORM\Fields\StringField($key, array(
-                        'title' => $field['title']
+                        'title' => $field['title'],
+                        'settings'=>$field['settings']
+                    )
+                ));
+            }
+            if($field['type'] == 'iblock_section'){
+                $fieldOrm = (new ORM\Fields\StringField($key, array(
+                        'title' => $field['title'],
+                        'settings'=>$field['settings']
+                    )
+                ));
+            }
+            if($field['type'] == 'iblock_element'){
+                $fieldOrm = (new ORM\Fields\StringField($key, array(
+                        'title' => $field['title'],
+                        'settings'=>$field['settings']
+                    )
+                ));
+            }
+            if($field['type'] == 'crm_entity'){
+                $fieldOrm = (new ORM\Fields\StringField($key, array(
+                        'title' => $field['title'],
+                        'settings'=>$field['settings']
+                    )
+                ));
+            }
+            if($field['type'] == 'crm'){
+                $fieldOrm = (new ORM\Fields\StringField($key, array(
+                        'title' => $field['title'],
+                        'settings'=>$field['settings']
                     )
                 ));
             }
             if($field['type'] == 'crm_deal'){
+                $fieldOrm = (new ORM\Fields\StringField($key, array(
+                        'title' => $field['title']
+                    )
+                ));
+            }
+            if($field['type'] == 'crm_contact'){
+                $fieldOrm = (new ORM\Fields\StringField($key, array(
+                        'title' => $field['title']
+                    )
+                ));
+            }
+            if($field['type'] == 'crm_lead'){
                 $fieldOrm = (new ORM\Fields\StringField($key, array(
                         'title' => $field['title']
                     )

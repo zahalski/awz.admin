@@ -743,7 +743,15 @@ class Helper {
 
     public static function formatListField($fieldData, $fieldCode, &$row, $ob=null){
         static $enumValues = [];
-
+        $primaryCode = null;
+        if($ob){
+            $primaryCode = $ob->getParam('PRIMARY', 'ID');
+        }
+        if(in_array($fieldData['type'], ['iblock_section','iblock_element','crm','group','user','employee','crm_contact', 'crm_company', 'crm_deal', 'crm_lead'])){
+            if(is_array($row->arRes[$fieldCode])){
+                $fieldData['isMultiple'] = 1;
+            }
+        }
         if($fieldData['type'] == 'datetime'){
             if(strtotime($row->arRes[$fieldCode])){
                 $row->arRes[$fieldCode] = \Bitrix\Main\Type\DateTime::createFromTimestamp(strtotime($row->arRes[$fieldCode]));
@@ -798,6 +806,26 @@ class Helper {
                     $row->AddViewField($fieldCode, $row->arRes[$fieldCode]);
                 }
             }
+            if($fieldData['type'] == 'iblock_element'){
+                if(!$fieldData['isReadOnly']) {
+                    $row->AddInputField($fieldCode, array("size" => $fieldData['settings']['SIZE']));
+                }
+                if(is_array($row->arRes[$fieldCode])){
+                    $row->AddViewField($fieldCode, implode(',',$row->arRes[$fieldCode]));
+                }else{
+                    $row->AddViewField($fieldCode, $row->arRes[$fieldCode]);
+                }
+            }
+            if($fieldData['type'] == 'iblock_section'){
+                if(!$fieldData['isReadOnly']) {
+                    $row->AddInputField($fieldCode, array("size" => $fieldData['settings']['SIZE']));
+                }
+                if(is_array($row->arRes[$fieldCode])){
+                    $row->AddViewField($fieldCode, implode(',',$row->arRes[$fieldCode]));
+                }else{
+                    $row->AddViewField($fieldCode, $row->arRes[$fieldCode]);
+                }
+            }
             if($fieldData['type'] == 'crm_multifield'){
                 $value = $row->arRes[$fieldCode];
                 if(is_array($row->arRes[$fieldCode])){
@@ -819,13 +847,142 @@ class Helper {
                     $row->AddViewField($fieldCode, $row->arRes[$fieldCode]);
                 }
             }
+            $checkAutoCrm = false;
+            $crmEntityCodes = [];
             if($fieldData['type'] == 'crm'){
                 if(!$fieldData['isReadOnly']) {
                     $row->AddInputField($fieldCode, array("size" => $fieldData['settings']['SIZE']));
                 }else{
                     $row->AddViewField($fieldCode, $row->arRes[$fieldCode]);
                 }
+                $crmEntityCodes = ['deal','lead','company','contact'];
+                if(isset($fieldData['settings']) && is_array($fieldData['settings'])){
+                    $entityTempList = [];
+                    foreach($fieldData['settings'] as $entKey=>$active){
+                        if($active == 'Y'){
+                            $entityTempList[] = $entKey;
+                        }
+                    }
+                    if(!empty($entityTempList)){
+                        $crmEntityCodes = $entityTempList;
+                    }
+                    if(count($entityTempList)==1){
+                        $ht_temp = [];
+                        $ht_tempIds = [];
+                        if($fieldData['isMultiple']){
+                            if(is_array($row->arRes[$fieldCode])){
+                                foreach($row->arRes[$fieldCode] as $v){
+                                    $ht_tempIds[] = $v;
+                                }
+                            }
+                        }elseif($row->arRes[$fieldCode]){
+                            $ht_tempIds[] = $row->arRes[$fieldCode];
+                        }
+                        foreach($ht_tempIds as $vId){
+                            $ht_temp[] = '<div data-type="'.$entityTempList[0].'" data-id="'.$vId.'" class="awz-autoload-field awz-autoload-'.$entityTempList[0].'-'.$vId.'">'.$vId.'</div>';
+                        }
+                        $row->AddViewField($fieldCode, implode("",$ht_temp));
+                    }else{
+                        $checkAutoCrm = true;
+                    }
+                }else{
+                    $checkAutoCrm = true;
+                }
             }
+            if($fieldData['type'] && in_array($fieldData['type'], ['iblock_element','iblock_section','group','user','employee','crm_contact', 'crm_company', 'crm_deal', 'crm_lead', 'crm_quote', 'crm_smart_invoice'])){
+                $finType = $fieldData['type'];
+                $crmEntityCodes[] = $fieldData['type'];
+                if($fieldData['type'] == 'iblock_section'){
+                    $crmEntityCodes = [];
+                    if(isset($fieldData['settings']['IBLOCK_ID'])){
+                        $crmEntityCodes[] = $fieldData['type'].'_'.$fieldData['settings']['IBLOCK_ID'];
+                        $finType = $fieldData['type'].'_'.$fieldData['settings']['IBLOCK_ID'];
+                    }
+                }
+                if($fieldData['type'] == 'iblock_element'){
+                    $crmEntityCodes = [];
+                    if(isset($fieldData['settings']['IBLOCK_ID'])){
+                        $crmEntityCodes[] = $fieldData['type'].'_'.$fieldData['settings']['IBLOCK_ID'];
+                        $finType = $fieldData['type'].'_'.$fieldData['settings']['IBLOCK_ID'];
+                    }
+                }
+                if($fieldData['type'] === 'user'){
+                    $crmEntityCodes[] = 'employee';
+                }
+                if(!$fieldData['isReadOnly']) {
+                    $row->AddInputField($fieldCode, array("size" => $fieldData['settings']['SIZE']));
+                }else{
+                    $row->AddViewField($fieldCode, $row->arRes[$fieldCode]);
+                }
+                $ht_temp = [];
+                $ht_tempIds = [];
+                if($fieldData['isMultiple']){
+                    if(is_array($row->arRes[$fieldCode])){
+                        foreach($row->arRes[$fieldCode] as $v){
+                            $ht_tempIds[] = $v;
+                        }
+                    }
+                }elseif($row->arRes[$fieldCode]){
+                    $ht_tempIds[] = $row->arRes[$fieldCode];
+                }
+                foreach($ht_tempIds as $vId){
+                    $ht_temp[] = '<div data-type="'.$finType.'" data-id="'.$vId.'" class="awz-autoload-field awz-autoload-'.$finType.'-'.$vId.'">'.$vId.'</div>';
+                }
+                $row->AddViewField($fieldCode, implode("",$ht_temp));
+            }
+            if($checkAutoCrm){
+                $ht_temp = [];
+                $ht_tempIds = [];
+                $type_temp = $fieldData['type'];
+                if($fieldData['isMultiple']){
+                    if(is_array($row->arRes[$fieldCode])){
+                        foreach($row->arRes[$fieldCode] as $v){
+                            $ht_tempIds[] = $v;
+                        }
+                    }
+                }elseif($row->arRes[$fieldCode]){
+                    $ht_tempIds[] = $row->arRes[$fieldCode];
+                }
+
+                foreach($ht_tempIds as $vId){
+                    $intId = $vId;
+                    if(mb_strpos($vId, '_')!==false){
+                        $vIdAr = explode('_', $vId);
+                        if($vIdAr[0] == 'CO'){
+                            $type_temp = 'crm_company';
+                            $intId = $vIdAr[1];
+                        }elseif($vIdAr[0] == 'C'){
+                            $type_temp = 'crm_contact';
+                            $intId = $vIdAr[1];
+                        }elseif($vIdAr[0] == 'D'){
+                            $type_temp = 'crm_deal';
+                            $intId = $vIdAr[1];
+                        }elseif($vIdAr[0] == 'L'){
+                            $type_temp = 'crm_lead';
+                            $intId = $vIdAr[1];
+                        }elseif($vIdAr[0] == 'Q'){
+                            $type_temp = 'crm_quote';
+                            $intId = $vIdAr[1];
+                        }elseif($vIdAr[0] == 'SI'){
+                            $type_temp = 'crm_smart_invoice';
+                            $intId = $vIdAr[1];
+                        }elseif(mb_substr($vIdAr[0],0,1) == 'T'){
+                            $type_temp = 'DYNAMIC_'.hexdec(mb_substr($vIdAr[0],1));
+                            $intId = $vIdAr[1];
+                        }
+                    }
+                    $ht_temp[] = '<div data-type="'.$type_temp.'" data-id="'.$intId.'" data-ido="'.$vId.'" class="awz-autoload-field awz-autoload-'.$type_temp.'-'.$intId.'">'.$vId.'</div>';
+                }
+                $row->AddViewField($fieldCode, implode("",$ht_temp));
+            }
+
+            if($primaryCode && !empty($crmEntityCodes)){
+                $value_tmp = $row->arRes[$fieldCode];
+                $editId = $fieldCode.'_'.$row->arRes[$primaryCode];
+                $fieldHtml = '<div class="wrp" id="'.$editId.'"><input style="width:80%;" value="'.(is_array($value_tmp) ? implode(',',$value_tmp) : $value_tmp).'" name="'.$fieldCode.'" class="main-grid-editor main-grid-editor-text" id="'.$fieldCode.'_control"/><button class="ui-btn ui-btn-xs ui-btn-light-border" onclick="window.awz_helper.openDialogAwzCrm(\''.$editId.'\',\''.implode(',',$crmEntityCodes).'\', \''.($fieldData['isMultiple'] ? 'Y' : 'N').'\');return false;">...</button></div>';
+                $row->AddEditField($fieldCode, $fieldHtml);
+            }
+
             if($fieldData['type'] == 'enum' || $fieldData['type'] == 'crm_status' || $fieldData['type'] == 'crm_category'){
 
                 if(!$fieldData['isReadOnly']) {
@@ -962,7 +1119,7 @@ class Helper {
                 }
             }
 
-            if($fieldData['type'] == 'user'){
+            if(false && $fieldData['type'] == 'user'){
                 if(!$fieldData['isReadOnly']){
                     /*$row->AddEditField(
                         $fieldCode,
@@ -996,7 +1153,7 @@ class Helper {
                 }
 
             }
-            if($fieldData['type'] == 'group'){
+            if(false && $fieldData['type'] == 'group'){
                 if(!$fieldData['isReadOnly']) {
                     $row->AddInputField($fieldCode, array("size" => $fieldData['settings']['SIZE']));
                 }
@@ -1258,6 +1415,20 @@ class Helper {
         }
 
         return $result;
+    }
+
+
+    public static function applyGridOptionsToCustomGrid(&$defaultOptions = [], $gridOptions = [])
+    {
+        foreach($defaultOptions as $key=>&$params){
+            if(is_array($params) && isset($gridOptions[$key]) && is_array($gridOptions[$key])){
+                $params = self::applyGridOptionsToCustomGrid($params, $gridOptions[$key]);
+            }elseif(isset($gridOptions[$key])){
+                $params = $gridOptions[$key];
+            }
+        }
+        unset($params);
+        return $defaultOptions;
     }
 
 }

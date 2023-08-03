@@ -32,7 +32,9 @@ class SmartTable extends ORM\Data\DataManager
         foreach(self::$fields as $key=>$field){
             $fieldOrm = null;
             if($field['isMultiple']){
-                continue;
+                if(!in_array($field['type'], ['iblock_element','iblock_section','crm','employee','user','crm_company','crm_lead','crm_deal','crm_contact'])){
+                    continue;
+                }
             }
             if($field['type'] == 'integer'){
                 $fieldOrm = (new ORM\Fields\IntegerField($key, array(
@@ -60,6 +62,44 @@ class SmartTable extends ORM\Data\DataManager
                 $fieldOrm = (new ORM\Fields\StringField($key, array(
                         'title' => $field['title'],
                         'settings'=>$field['settings']
+                    )
+                ));
+            }
+            if($field['type'] == 'iblock_section'){
+                $fieldOrm = (new ORM\Fields\StringField($key, array(
+                        'title' => $field['title'],
+                        'settings'=>$field['settings']
+                    )
+                ));
+            }
+            if($field['type'] == 'iblock_element'){
+                $fieldOrm = (new ORM\Fields\StringField($key, array(
+                        'title' => $field['title'],
+                        'settings'=>$field['settings']
+                    )
+                ));
+            }
+            if($field['type'] == 'crm_deal'){
+                $fieldOrm = (new ORM\Fields\StringField($key, array(
+                        'title' => $field['title']
+                    )
+                ));
+            }
+            if($field['type'] == 'crm_contact'){
+                $fieldOrm = (new ORM\Fields\StringField($key, array(
+                        'title' => $field['title']
+                    )
+                ));
+            }
+            if($field['type'] == 'crm_lead'){
+                $fieldOrm = (new ORM\Fields\StringField($key, array(
+                        'title' => $field['title']
+                    )
+                ));
+            }
+            if($field['type'] == 'crm_company'){
+                $fieldOrm = (new ORM\Fields\StringField($key, array(
+                        'title' => $field['title']
                     )
                 ));
             }
@@ -94,6 +134,12 @@ class SmartTable extends ORM\Data\DataManager
                 ));
             }
             if($field['type'] == 'user'){
+                $fieldOrm = (new ORM\Fields\IntegerField($key, array(
+                        'title' => $field['title']
+                    )
+                ));
+            }
+            if($field['type'] == 'employee'){
                 $fieldOrm = (new ORM\Fields\IntegerField($key, array(
                         'title' => $field['title']
                     )

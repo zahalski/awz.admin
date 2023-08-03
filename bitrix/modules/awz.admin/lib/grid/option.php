@@ -16,6 +16,8 @@ class Option extends Grid\Options {
     protected $filterPresets;
     protected $currentView;
 
+    protected \Awz\Admin\Parameters $customOptions;
+
     public function __construct($gridId, array $filterPresets = array())
     {
         $this->grid_id = $gridId;
@@ -73,6 +75,15 @@ class Option extends Grid\Options {
             $this->SetVisibleColumns(explode(",", $aOptions["views"][$this->currentView]['columns']));
 
         $this->all_options = $aOptions;
+        $custom = [];
+        if(isset($this->all_options['customOptions']) && is_array($this->all_options['customOptions'])){
+            $custom = $this->all_options['customOptions'];
+        }
+        $this->customOptions = new \Awz\Admin\Parameters($custom);
+    }
+
+    public function getCustomOptions(){
+        return $this->customOptions;
     }
 
     public function SetVisibleColumns($arColumns)
@@ -185,6 +196,8 @@ class Option extends Grid\Options {
     }
 
     public function save(){
+
+        $this->all_options['customOptions'] = $this->getCustomOptions()->getParameters();
 
         $event = new Event(
             "awz.admin",
