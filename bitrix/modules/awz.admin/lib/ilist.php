@@ -156,8 +156,6 @@ class IList
     }
 
 	public function getRowListAdmin($arRes){
-        //print_r($arRes);
-        //die();
 		$editFile = $this->getParam("FILE_EDIT").'?'.$this->getParam("PRIMARY").'='.$arRes[$this->getParam("PRIMARY")].'&lang='.LANG;
 		
 		$row =& $this->getAdminList()->AddRow($arRes[$this->getParam("PRIMARY")], $arRes);

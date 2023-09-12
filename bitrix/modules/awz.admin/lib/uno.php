@@ -108,6 +108,9 @@ class UnoTable extends ORM\Data\DataManager
                 }else{
                     $fieldOrm->setParameter('sortable', false);
                 }
+                $fieldOrm->setParameter('isReadOnly', $field['isReadOnly']);
+                if(!isset($field['noFilter'])) $field['noFilter'] = '';
+                $fieldOrm->setParameter('isFiltered', !$field['noFilter']);
                 $fields[$key] = $fieldOrm;
             }
         }

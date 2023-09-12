@@ -447,13 +447,31 @@ class PublicList extends \CAdminUiList
                                 $value = htmlspecialcharsex(Loc::getMessage("admin_lib_list_no"));
                             break;
                         case "select":
-                            if (isset($field["edit"]["values"][$value]))
-                            {
-                                $value = htmlspecialcharsex($field["edit"]["values"][$value]);
-                            }
-                            elseif (isset($field["view"]["values"][$value]))
-                            {
-                                $value = htmlspecialcharsex($field["view"]["values"][$value]);
+                            if(is_array($value)){
+                                $valAr = [];
+                                foreach($value as $v){
+                                    $v = trim($v);
+                                    if($v){
+                                        if(isset($field["edit"]["values"][$v])){
+                                            $valAr[$v] = htmlspecialcharsex($field["edit"]["values"][$v]);
+                                        }elseif(isset($field["view"]["values"][$v])){
+                                            $valAr[$v] = htmlspecialcharsex($field["view"]["values"][$v]);
+                                        }else{
+                                            $valAr[$v] = "ID: ".htmlspecialcharsex($v);
+                                        }
+                                    }
+                                }
+                                $value = implode(", ", $valAr);
+                                //$value = $valAr;
+                            }else{
+                                if (isset($field["edit"]["values"][$value]))
+                                {
+                                    $value = htmlspecialcharsex($field["edit"]["values"][$value]);
+                                }
+                                elseif (isset($field["view"]["values"][$value]))
+                                {
+                                    $value = htmlspecialcharsex($field["view"]["values"][$value]);
+                                }
                             }
                             break;
                         case "file":
@@ -560,6 +578,9 @@ class PublicList extends \CAdminUiList
                     "TYPE" => Types::DROPDOWN,
                     "items" => $field["edit"]["values"]
                 );
+                if(isset($field["edit"]["attributes"]["multiple"]) && $field["edit"]["attributes"]["multiple"]=='multiselect'){
+                    $editable["TYPE"] = Types::MULTISELECT;
+                }
                 break;
             case "file":
                 $editable = array(

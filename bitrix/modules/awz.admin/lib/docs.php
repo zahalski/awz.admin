@@ -105,6 +105,13 @@ class DocsTable extends ORM\Data\DataManager
                     )
                 ));
             }
+            if($field['type'] == 'crm'){
+                $fieldOrm = (new ORM\Fields\StringField($key, array(
+                        'title' => $field['title'],
+                        'settings'=>$field['settings']
+                    )
+                ));
+            }
             if($fieldOrm && $field['isRequired']){
                 $fieldOrm->configureRequired();
             }
@@ -115,6 +122,8 @@ class DocsTable extends ORM\Data\DataManager
                     $fieldOrm->setParameter('sortable', false);
                 }
                 $fieldOrm->setParameter('isReadOnly', $field['isReadOnly']);
+                if(!isset($field['noFilter'])) $field['noFilter'] = '';
+                $fieldOrm->setParameter('isFiltered', !$field['noFilter']);
                 $fields[$key] = $fieldOrm;
             }
         }

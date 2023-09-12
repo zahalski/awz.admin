@@ -25,6 +25,17 @@ class WorksTable extends ORM\Data\DataManager
         return '';
     }
 
+    public static function isMultipleSupport(string $type){
+        $supportsType = ['enum','enumeration','crm_status','crm_category',
+            'crm_multifield','crm_company',
+            'crm_lead','crm_contact','crm_deal','crm','url',
+            'string','double','float','integer'];
+        if(in_array($type, $supportsType)){
+            return true;
+        }
+        return false;
+    }
+
     public static function getMap()
     {
         $fields = array();
@@ -33,8 +44,8 @@ class WorksTable extends ORM\Data\DataManager
         foreach(self::$fields as $key=>$field){
 
             $fieldOrm = null;
-            if($field['isMultiple']){
-                //continue;
+            if($field['isMultiple'] && !self::isMultipleSupport($field['type'])){
+                continue;
             }
             if($field['type'] == 'integer'){
                 $fieldOrm = (new ORM\Fields\IntegerField($key, array(
@@ -46,6 +57,96 @@ class WorksTable extends ORM\Data\DataManager
                 }
             }
             if($field['type'] == 'string'){
+                $fieldOrm = (new ORM\Fields\StringField($key, array(
+                        'title' => $field['title']
+                    )
+                ));
+            }
+            if($field['type'] == 'crm_entity'){
+                $fieldOrm = (new ORM\Fields\StringField($key, array(
+                        'title' => $field['title'],
+                        'settings'=>$field['settings']
+                    )
+                ));
+            }
+            if($field['type'] == 'crm'){
+                $fieldOrm = (new ORM\Fields\StringField($key, array(
+                        'title' => $field['title'],
+                        'settings'=>$field['settings']
+                    )
+                ));
+            }
+            if($field['type'] == 'iblock_section'){
+                $fieldOrm = (new ORM\Fields\StringField($key, array(
+                        'title' => $field['title'],
+                        'settings'=>$field['settings']
+                    )
+                ));
+            }
+            if($field['type'] == 'iblock_element'){
+                $fieldOrm = (new ORM\Fields\StringField($key, array(
+                        'title' => $field['title'],
+                        'settings'=>$field['settings']
+                    )
+                ));
+            }
+            if($field['type'] == 'crm_entity'){
+                $fieldOrm = (new ORM\Fields\StringField($key, array(
+                        'title' => $field['title'],
+                        'settings'=>$field['settings']
+                    )
+                ));
+            }
+            if($field['type'] == 'crm'){
+                $fieldOrm = (new ORM\Fields\StringField($key, array(
+                        'title' => $field['title'],
+                        'settings'=>$field['settings']
+                    )
+                ));
+            }
+            if($field['type'] == 'crm_deal'){
+                $fieldOrm = (new ORM\Fields\StringField($key, array(
+                        'title' => $field['title']
+                    )
+                ));
+            }
+            if($field['type'] == 'crm_contact'){
+                $fieldOrm = (new ORM\Fields\StringField($key, array(
+                        'title' => $field['title']
+                    )
+                ));
+            }
+            if($field['type'] == 'crm_lead'){
+                $fieldOrm = (new ORM\Fields\StringField($key, array(
+                        'title' => $field['title']
+                    )
+                ));
+            }
+            if($field['type'] == 'crm_company'){
+                $fieldOrm = (new ORM\Fields\StringField($key, array(
+                        'title' => $field['title']
+                    )
+                ));
+            }
+            if($field['type'] == 'crm_multifield'){
+                $fieldOrm = (new ORM\Fields\StringField($key, array(
+                        'title' => $field['title']
+                    )
+                ));
+            }
+            if($field['type'] == 'crm_currency'){
+                $fieldOrm = (new ORM\Fields\StringField($key, array(
+                        'title' => $field['title']
+                    )
+                ));
+            }
+            if($field['type'] == 'char'){
+                $fieldOrm = (new ORM\Fields\StringField($key, array(
+                        'title' => $field['title']
+                    )
+                ));
+            }
+            if($field['type'] == 'email'){
                 $fieldOrm = (new ORM\Fields\StringField($key, array(
                         'title' => $field['title']
                     )
@@ -76,6 +177,18 @@ class WorksTable extends ORM\Data\DataManager
                 ));
             }
             if($field['type'] == 'enum' && !empty($field['values'])){
+                $fieldOrm = (new ORM\Fields\EnumField($key, array(
+                        'title' => $field['title']
+                    )
+                ))->configureValues($field['values']);
+            }
+            if($field['type'] == 'enumeration' && !empty($field['values'])){
+                $fieldOrm = (new ORM\Fields\EnumField($key, array(
+                        'title' => $field['title']
+                    )
+                ))->configureValues($field['values']);
+            }
+            if($field['type'] == 'crm_status' && !empty($field['values'])){
                 $fieldOrm = (new ORM\Fields\EnumField($key, array(
                         'title' => $field['title']
                     )
@@ -115,6 +228,8 @@ class WorksTable extends ORM\Data\DataManager
                     $fieldOrm->setParameter('sortable', false);
                 }
                 $fieldOrm->setParameter('isReadOnly', $field['isReadOnly']);
+                if(!isset($field['noFilter'])) $field['noFilter'] = '';
+                $fieldOrm->setParameter('isFiltered', !$field['noFilter']);
                 $fields[$key] = $fieldOrm;
             }
         }

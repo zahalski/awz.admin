@@ -175,12 +175,20 @@ class OrmListTable extends ORM\Data\DataManager
                 $fieldOrm->configureRequired();
             }
             if($fieldOrm){
+                if(isset($field['isPrimary']) && $field['isPrimary']){
+                    $fieldOrm->configurePrimary();
+                }
+                if(isset($field['isAutoComplete']) && $field['isAutoComplete']){
+                    $fieldOrm->configureAutocomplete();
+                }
                 if($field['sort']){
                     $fieldOrm->setParameter('sortable', $field['sort']);
                 }else{
                     $fieldOrm->setParameter('sortable', false);
                 }
                 $fieldOrm->setParameter('isReadOnly', $field['isReadOnly']);
+                if(!isset($field['noFilter'])) $field['noFilter'] = '';
+                $fieldOrm->setParameter('isFiltered', !$field['noFilter']);
                 $fields[$key] = $fieldOrm;
             }
         }

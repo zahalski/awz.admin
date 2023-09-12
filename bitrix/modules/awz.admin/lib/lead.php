@@ -11,7 +11,7 @@ use Bitrix\Main\Type\DateTime;
 
 Loc::loadMessages(__FILE__);
 
-class ContactTable extends ORM\Data\DataManager
+class LeadTable extends ORM\Data\DataManager
 {
     public static $fields;
 

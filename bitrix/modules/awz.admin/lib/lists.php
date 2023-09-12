@@ -6,12 +6,11 @@ use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ORM;
 use Bitrix\Main\Result;
-use Bitrix\Main\Text\StringHelper;
 use Bitrix\Main\Type\DateTime;
 
 Loc::loadMessages(__FILE__);
 
-class ContactTable extends ORM\Data\DataManager
+class ListsTable extends ORM\Data\DataManager
 {
     public static $fields;
 
@@ -214,6 +213,21 @@ class ContactTable extends ORM\Data\DataManager
                     )
                 ));
             }
+
+            /*if($field['type'] == 'iblock_section'){
+                $fieldOrm = (new ORM\Fields\StringField($key, array(
+                        'title' => $field['title'],
+                        'settings'=>$field['settings']
+                    )
+                ));
+            }*/
+            /*if($field['type'] == 'iblock_element'){
+                $fieldOrm = (new ORM\Fields\StringField($key, array(
+                        'title' => $field['title'],
+                        'settings'=>$field['settings']
+                    )
+                ));
+            }*/
 
 
             if($fieldOrm && $field['isRequired']){

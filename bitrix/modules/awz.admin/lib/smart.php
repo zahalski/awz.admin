@@ -24,6 +24,21 @@ class SmartTable extends ORM\Data\DataManager
         return '';
     }
 
+    public static function isMultipleSupport(string $type){
+        $supportsType = [
+            'enum','enumeration','crm_status','crm_category',
+            'crm_multifield',
+            'crm','crm_company', 'crm_lead','crm_contact','crm_deal',
+            'url', 'string','double','float','integer',
+            'date', 'datetime',
+            'money','user','group','employee'
+        ];
+        if(in_array($type, $supportsType)){
+            return true;
+        }
+        return false;
+    }
+
     public static function getMap()
     {
         $fields = array();
@@ -31,17 +46,16 @@ class SmartTable extends ORM\Data\DataManager
         //die();
         foreach(self::$fields as $key=>$field){
             $fieldOrm = null;
-            if($field['isMultiple']){
-                if(!in_array($field['type'], ['iblock_element','iblock_section','crm','employee','user','crm_company','crm_lead','crm_deal','crm_contact'])){
-                    continue;
-                }
+            if($field['isMultiple'] && !self::isMultipleSupport($field['type'])){
+                continue;
             }
+
             if($field['type'] == 'integer'){
                 $fieldOrm = (new ORM\Fields\IntegerField($key, array(
                         'title' => $field['title']
                     )
                 ));
-                if($key=='id'){
+                if(mb_strtolower($key)=='id'){
                     $fieldOrm->configurePrimary()->configureAutocomplete();
                 }
             }
@@ -51,10 +65,33 @@ class SmartTable extends ORM\Data\DataManager
                     )
                 ));
             }
-            if($field['type'] == 'crm_entity'){
+            if($field['type'] == 'double'){
+                $fieldOrm = (new ORM\Fields\FloatField($key, array(
+                        'title' => $field['title']
+                    )
+                ));
+            }
+            if($field['type'] == 'float'){
+                $fieldOrm = (new ORM\Fields\FloatField($key, array(
+                        'title' => $field['title']
+                    )
+                ));
+            }
+            if($field['type'] == 'url'){
                 $fieldOrm = (new ORM\Fields\StringField($key, array(
-                        'title' => $field['title'],
-                        'settings'=>$field['settings']
+                        'title' => $field['title']
+                    )
+                ));
+            }
+            if($field['type'] == 'email'){
+                $fieldOrm = (new ORM\Fields\StringField($key, array(
+                        'title' => $field['title']
+                    )
+                ));
+            }
+            if($field['type'] == 'boolean'){
+                $fieldOrm = (new ORM\Fields\BooleanField($key, array(
+                        'title' => $field['title']
                     )
                 ));
             }
@@ -65,14 +102,7 @@ class SmartTable extends ORM\Data\DataManager
                     )
                 ));
             }
-            if($field['type'] == 'iblock_section'){
-                $fieldOrm = (new ORM\Fields\StringField($key, array(
-                        'title' => $field['title'],
-                        'settings'=>$field['settings']
-                    )
-                ));
-            }
-            if($field['type'] == 'iblock_element'){
+            if($field['type'] == 'crm_entity'){
                 $fieldOrm = (new ORM\Fields\StringField($key, array(
                         'title' => $field['title'],
                         'settings'=>$field['settings']
@@ -103,60 +133,6 @@ class SmartTable extends ORM\Data\DataManager
                     )
                 ));
             }
-            if($field['type'] == 'url'){
-                $fieldOrm = (new ORM\Fields\StringField($key, array(
-                        'title' => $field['title']
-                    )
-                ));
-            }
-            if($field['type'] == 'money'){
-                $fieldOrm = (new ORM\Fields\StringField($key, array(
-                        'title' => $field['title']
-                    )
-                ));
-            }
-            if($field['type'] == 'datetime'){
-                $fieldOrm = (new ORM\Fields\DateTimeField($key, array(
-                        'title' => $field['title']
-                    )
-                ));
-            }
-            if($field['type'] == 'boolean'){
-                $fieldOrm = (new ORM\Fields\BooleanField($key, array(
-                        'title' => $field['title']
-                    )
-                ));
-            }
-            if($field['type'] == 'date'){
-                $fieldOrm = (new ORM\Fields\DateField($key, array(
-                        'title' => $field['title']
-                    )
-                ));
-            }
-            if($field['type'] == 'user'){
-                $fieldOrm = (new ORM\Fields\IntegerField($key, array(
-                        'title' => $field['title']
-                    )
-                ));
-            }
-            if($field['type'] == 'employee'){
-                $fieldOrm = (new ORM\Fields\IntegerField($key, array(
-                        'title' => $field['title']
-                    )
-                ));
-            }
-            if($field['type'] == 'double'){
-                $fieldOrm = (new ORM\Fields\FloatField($key, array(
-                        'title' => $field['title']
-                    )
-                ));
-            }
-            if($field['type'] == 'enumeration' && !empty($field['values'])){
-                $fieldOrm = (new ORM\Fields\EnumField($key, array(
-                        'title' => $field['title']
-                    )
-                ))->configureValues($field['values']);
-            }
             if($field['type'] == 'crm_status' && !empty($field['values'])){
                 $fieldOrm = (new ORM\Fields\EnumField($key, array(
                         'title' => $field['title']
@@ -169,11 +145,98 @@ class SmartTable extends ORM\Data\DataManager
                     )
                 ))->configureValues($field['values']);
             }
+            if($field['type'] == 'crm_currency'){
+                if(!empty($field['values'])){
+                    $fieldOrm = (new ORM\Fields\EnumField($key, array(
+                            'title' => $field['title']
+                        )
+                    ))->configureValues($field['values']);
+                }else{
+                    $fieldOrm = (new ORM\Fields\StringField($key, array(
+                            'title' => $field['title']
+                        )
+                    ));
+                }
+            }
+            if($field['type'] == 'crm_multifield'){
+                $fieldOrm = (new ORM\Fields\StringField($key, array(
+                        'title' => $field['title']
+                    )
+                ));
+            }
+            if($field['type'] == 'enum' && !empty($field['values'])){
+                $fieldOrm = (new ORM\Fields\EnumField($key, array(
+                        'title' => $field['title']
+                    )
+                ))->configureValues($field['values']);
+            }
+            if($field['type'] == 'enumeration' && !empty($field['values'])){
+                $fieldOrm = (new ORM\Fields\EnumField($key, array(
+                        'title' => $field['title']
+                    )
+                ))->configureValues($field['values']);
+            }
+            if($field['type'] == 'user'){
+                $fieldOrm = (new ORM\Fields\IntegerField($key, array(
+                        'title' => $field['title']
+                    )
+                ));
+            }
+            if($field['type'] == 'group'){
+                $fieldOrm = (new ORM\Fields\IntegerField($key, array(
+                        'title' => $field['title']
+                    )
+                ));
+            }
+            if($field['type'] == 'employee'){
+                $fieldOrm = (new ORM\Fields\IntegerField($key, array(
+                        'title' => $field['title']
+                    )
+                ));
+            }
+            if($field['type'] == 'datetime'){
+                $fieldOrm = (new ORM\Fields\DateTimeField($key, array(
+                        'title' => $field['title']
+                    )
+                ));
+            }
+            if($field['type'] == 'date'){
+                $fieldOrm = (new ORM\Fields\DateField($key, array(
+                        'title' => $field['title']
+                    )
+                ));
+            }
+            if($field['type'] == 'money'){
+                $fieldOrm = (new ORM\Fields\StringField($key, array(
+                        'title' => $field['title']
+                    )
+                ));
+            }
+
+            /*if($field['type'] == 'iblock_section'){
+                $fieldOrm = (new ORM\Fields\StringField($key, array(
+                        'title' => $field['title'],
+                        'settings'=>$field['settings']
+                    )
+                ));
+            }*/
+            /*if($field['type'] == 'iblock_element'){
+                $fieldOrm = (new ORM\Fields\StringField($key, array(
+                        'title' => $field['title'],
+                        'settings'=>$field['settings']
+                    )
+                ));
+            }*/
+
+
+
             if($fieldOrm && $field['isRequired']){
                 $fieldOrm->configureRequired();
             }
             if($fieldOrm){
                 $fieldOrm->setParameter('isReadOnly', $field['isReadOnly']);
+                if(!isset($field['noFilter'])) $field['noFilter'] = '';
+                $fieldOrm->setParameter('isFiltered', !$field['noFilter']);
                 $fields[$key] = $fieldOrm;
             }
         }

@@ -330,6 +330,95 @@ class Helper {
     }
 
     /**
+     * добавление групповых функций
+     *
+     * @param $arParams параметры сущности грида
+     * @param $adminCustom
+     * @return void
+     */
+    public static function setFuncActionParams(&$arParams, $fields, $adminCustom)
+    {
+        $generatedItem = [];
+        $generatedItem['NAME'] = Loc::getMessage('AWZ_ADMIN_HELPER_GRID_OBR');
+        $generatedItem['VALUE'] = 'control_ef_func';
+        $generatedItem['ONCHANGE'] = [
+            ['ACTION'=>'RESET_CONTROLS'],
+            [
+                'ACTION'=>'FUNC',
+                'DATA'=>[]
+            ]
+        ];
+
+        static $eniqueId;
+        if(!$eniqueId) $eniqueId = 0;
+        foreach($fields as $obField) {
+            $eniqueId++;
+            /* @var $obField \Bitrix\Main\ORM\Fields\Field */
+            if ($obField->getParameter('isReadOnly')) continue;
+            $fieldData = $arParams['SMART_FIELDS'][$obField->getName()];
+            if($fieldData['type'] == 'integer'){
+
+            }
+        }
+
+        $generatedItem['ONCHANGE'][1]['DATA'][] = [
+            'TYPE' => 'TEXT',
+            'ID' => 'value_entry_func',
+            'NAME' => 'value_entry_func',
+            'CLASS' => 'apply',
+            'PLACEHOLDER' => Loc::getMessage('AWZ_ADMIN_HELPER_GRID_OBR_JS'),
+            'ONCHANGE' => [
+                ['ACTION' => 'RESET_CONTROLS'],
+                [
+                    'ACTION' => 'CALLBACK',
+                    'DATA' => [
+                        ['JS' => ""]
+                    ]
+                ]
+            ]
+        ];
+
+        $generatedItem['ONCHANGE'][1]['DATA'][] = [
+            'TYPE'=>'BUTTON',
+            'ID'=>'apply_button',
+            'CLASS'=>'apply',
+            'TEXT'=>Loc::getMessage('AWZ_ADMIN_HELPER_COPY'),
+            'ONCHANGE'=>[
+                [
+                    'ACTION'=>'CALLBACK',
+                    'DATA'=>[
+                        ['JS'=>"window.awz_helper.applyGroupButton('ef_items')"]
+                    ]
+                ]
+            ]
+        ];
+
+        $generatedItem['ONCHANGE'][1]['DATA'][] = [
+            'TYPE'=>'BUTTON',
+            'ID'=>'cansel_button',
+            'CLASS'=>'main-grid-buttons cancel',
+            'TEXT'=>Loc::getMessage('AWZ_ADMIN_HELPER_CHANSEL'),
+            'ONCHANGE'=>[
+                [
+                    'ACTION'=>'CALLBACK',
+                    'DATA'=>[
+                        ['JS'=>"window.awz_helper.canselGroupActions()"]
+                    ]
+                ]
+            ]
+        ];
+
+        $createItemAction = \Awz\Admin\Helper::getDefActionsList(
+            $arParams['ACTION_PANEL']['GROUPS'][0]['ITEMS']
+        );
+        $createItemAction['ITEMS'][] = $generatedItem;
+        \Awz\Admin\Helper::replaceDefActionsList(
+            $arParams['ACTION_PANEL']['GROUPS'][0]['ITEMS'],
+            $createItemAction
+        );
+    }
+
+    /**
      * добавление группового удаления
      *
      * @param $arParams параметры сущности грида
@@ -407,10 +496,30 @@ class Helper {
      * @return void
      */
     public static function setFieldsActionParams(&$arParams, $fields, $adminCustom){
+        static $eniqueId;
+        if(!$eniqueId) $eniqueId = 0;
         foreach($fields as $obField){
-            /* @var $obField Bitrix\Main\ORM\Fields\Field */
+            $eniqueId++;
+            /* @var $obField \Bitrix\Main\ORM\Fields\Field */
             if($obField->getParameter('isReadOnly')) continue;
             $fieldData = $arParams['SMART_FIELDS'][$obField->getName()];
+
+            if($fieldData['isMultiple']){
+                if($arParams['ENTITY'] == '\Awz\Admin\ListsTable'){
+                    continue;
+                }elseif($arParams['ENTITY'] == '\Awz\Admin\DocsTable'){
+                    continue;
+                }elseif($arParams['ENTITY'] == '\Awz\Admin\WorksTable'){
+                    continue;
+                }
+                if(!in_array($fieldData['type'], [
+                   'enum', 'enumeration', 'crm_status', 'crm_category', 'crm_currency',
+                    'crm','crm_company', 'crm_lead','crm_contact','crm_deal',
+                    'url', 'string','double','float','integer'
+                ])){
+                    continue;
+                }
+            }
 
             $generatedItem = [];
             $generatedItem['NAME'] = Loc::getMessage('AWZ_ADMIN_HELPER_EDIT_FIELD_LABEL').' '.$obField->getTitle();
@@ -433,34 +542,171 @@ class Helper {
                     ['ACTION'=>'RESET_CONTROLS']
                 ]
             ];
+            $generatedItem['ONCHANGE'][1]['DATA'][] = [
+                'TYPE'=>'HIDDEN',
+                'ID'=>'awz_field_name',
+                'NAME'=>'awz_field_name',
+                'VALUE'=>$obField->getName(),
+                'ONCHANGE'=>[
+                    ['ACTION'=>'RESET_CONTROLS']
+                ]
+            ];
+            $generatedItem['ONCHANGE'][1]['DATA'][] = [
+                'TYPE'=>'HIDDEN',
+                'ID'=>'awz_field_name_multiple',
+                'NAME'=>'awz_field_name_multiple',
+                'VALUE'=>$fieldData['isMultiple'] ? 'Y' : 'N',
+                'ONCHANGE'=>[
+                    ['ACTION'=>'RESET_CONTROLS']
+                ]
+            ];
+            $generatedItem['ONCHANGE'][1]['DATA'][] = [
+                'TYPE'=>'HIDDEN',
+                'ID'=>'awz_field_name_type',
+                'NAME'=>'awz_field_name_type',
+                'VALUE'=>$fieldData['type'],
+                'ONCHANGE'=>[
+                    ['ACTION'=>'RESET_CONTROLS']
+                ]
+            ];
             if($fieldData['type'] == 'enum' || $fieldData['type'] == 'enumeration' ||
-                $fieldData['type'] == 'crm_status' || $fieldData['type'] == 'crm_category')
+                $fieldData['type'] == 'crm_status' || $fieldData['type'] == 'crm_category'
+                || ($fieldData['type'] == 'crm_currency' && !empty($fieldData['values'])))
             {
-                if(!isset($fieldData['values'][''])) $fieldData['values'][''] = '-';
-                $items = [];
-                foreach($fieldData['values'] as $code=>$val){
-                    $items[] = [
-                        'NAME'=>$val,
-                        'VALUE'=>$code,
+                if($fieldData['isMultiple']){
+                    $generatedItem['ONCHANGE'][1]['DATA'][] = [
+                        'TYPE'=>'DROPDOWN',
+                        'ID'=>'value_entry_type',
+                        'NAME'=>'value_entry_type',
+                        'CLASS'=>'apply',
+                        'ONCHANGE'=>[
+                            ['ACTION'=>'RESET_CONTROLS'],
+                            [
+                                'ACTION'=>'CALLBACK',
+                                'DATA'=>[
+                                    ['JS'=>""]
+                                ]
+                            ]
+                        ],
+                        'ITEMS'=>[
+                            ['VALUE'=>'replace', 'NAME'=>Loc::getMessage('AWZ_ADMIN_HELPER_GRID_BTN_REPL')],
+                            ['VALUE'=>'add', 'NAME'=>Loc::getMessage('AWZ_ADMIN_HELPER_GRID_BTN_ADD')],
+                            ['VALUE'=>'remove', 'NAME'=>Loc::getMessage('AWZ_ADMIN_HELPER_GRID_BTN_DEL')],
+                        ]
                     ];
-                }
-                $generatedItem['ONCHANGE'][1]['DATA'][] = [
-                    'TYPE'=>'DROPDOWN',
-                    'ID'=>'value_entry',
-                    'NAME'=>'value_entry',
-                    'CLASS'=>'apply',
-                    'ONCHANGE'=>[
-                        ['ACTION'=>'RESET_CONTROLS'],
-                        [
-                            'ACTION'=>'CALLBACK',
-                            'DATA'=>[
-                                ['JS'=>""]
+                    $generatedItem['ONCHANGE'][1]['DATA'][] = [
+                        'TYPE'=>'TEXT',
+                        'ID'=>'value_entry',
+                        'NAME'=>'value_entry',
+                        'CLASS'=>'',
+                        'PLACEHOLDER'=>Loc::getMessage('AWZ_ADMIN_HELPER_PARAM_VAL'),
+                        'ONCHANGE'=>[
+                            ['ACTION'=>'RESET_CONTROLS'],
+                            [
+                                'ACTION'=>'CALLBACK',
+                                'FIELD_ID'=>$obField->getName(),
+                                'MULTIPLE'=>$fieldData['isMultiple'] ? 'Y' : 'N',
+                                'DATA'=>[
+                                    ['JS'=>""],
+                                ]
                             ]
                         ]
-                    ],
-                    'ITEMS'=>$items
-                ];
-            }else{
+                    ];
+                    $selValues = [];
+                    foreach($fieldData['values'] as $k=>$v){
+                        $selValues[] = [
+                            'id'=>$k ? $k : '-',
+                            'entityId'=>$fieldData['type'],
+                            'tabs'=>$fieldData['type'],
+                            'title'=>$v
+                        ];
+                    }
+                    $tab = [
+                        'id'=> $fieldData['type'],
+                        'title'=> $fieldData['title']
+                    ];
+                    $generatedItem['ONCHANGE'][1]['DATA'][] = [
+                        'TYPE'=>'BUTTON',
+                        'ID'=>'multiselect_'.$eniqueId,
+                        'CLASS'=>'left-minus-10',
+                        'TEXT'=>'+',
+                        'ONCHANGE'=>[
+                            [
+                                'ACTION'=>'CALLBACK',
+                                'VALUES'=>$selValues,
+                                'TAB'=>[$tab],
+                                'DATA'=>[
+                                    ['JS'=>"window.awz_nhelper.openMultiselect('multiselect_".$eniqueId."_control');"],
+                                ]
+                            ]
+                        ],
+                    ];
+                }else{
+                    if(!isset($fieldData['values'][''])) $fieldData['values'][''] = '-';
+                    $items = [];
+                    foreach($fieldData['values'] as $code=>$val){
+                        if(is_array($val)){
+                            if($val['ID'] && $val['VALUE']){
+                                $items[] = [
+                                    'NAME'=>$val['VALUE'],
+                                    'VALUE'=>$val['ID'],
+                                ];
+                            }
+                        }else{
+                            $items[] = [
+                                'NAME'=>$val,
+                                'VALUE'=>$code,
+                            ];
+                        }
+                    }
+                    $generatedItem['ONCHANGE'][1]['DATA'][] = [
+                        'TYPE'=>'DROPDOWN',
+                        'ID'=>'value_entry',
+                        'NAME'=>'value_entry',
+                        'CLASS'=>'apply',
+                        'ONCHANGE'=>[
+                            ['ACTION'=>'RESET_CONTROLS'],
+                            [
+                                'ACTION'=>'CALLBACK',
+                                'DATA'=>[
+                                    ['JS'=>""]
+                                ]
+                            ]
+                        ],
+                        'ITEMS'=>$items
+                    ];
+                }
+            }
+            elseif(in_array($fieldData['type'],
+                [
+                    'crm','crm_company', 'crm_lead','crm_contact','crm_deal',
+                    'user', 'group', 'employee'
+                ]
+                )
+            )
+            {
+                if($fieldData['isMultiple']){
+                    $generatedItem['ONCHANGE'][1]['DATA'][] = [
+                        'TYPE'=>'DROPDOWN',
+                        'ID'=>'value_entry_type',
+                        'NAME'=>'value_entry_type',
+                        'CLASS'=>'apply',
+                        'ONCHANGE'=>[
+                            ['ACTION'=>'RESET_CONTROLS'],
+                            [
+                                'ACTION'=>'CALLBACK',
+                                'DATA'=>[
+                                    ['JS'=>""]
+                                ]
+                            ]
+                        ],
+                        'ITEMS'=>[
+                            ['VALUE'=>'replace', 'NAME'=>Loc::getMessage('AWZ_ADMIN_HELPER_GRID_BTN_REPL')],
+                            ['VALUE'=>'add', 'NAME'=>Loc::getMessage('AWZ_ADMIN_HELPER_GRID_BTN_ADD')],
+                            ['VALUE'=>'remove', 'NAME'=>Loc::getMessage('AWZ_ADMIN_HELPER_GRID_BTN_DEL')],
+                        ]
+                    ];
+                }
                 $generatedItem['ONCHANGE'][1]['DATA'][] = [
                     'TYPE'=>'TEXT',
                     'ID'=>'value_entry',
@@ -472,13 +718,138 @@ class Helper {
                         [
                             'ACTION'=>'CALLBACK',
                             'DATA'=>[
-                                ['JS'=>""]
+                                ['JS'=>""],
+                            ]
+                        ]
+                    ]
+                ];
+                $multiple = $fieldData['isMultiple'] ? 'Y' : 'N';
+                $entities = [];
+                if(in_array(
+                    $fieldData['type'],
+                    ['crm_company', 'crm_lead','crm_contact','crm_deal',
+                        'crm_invoice','crm_quote','crm_requisite', 'crm_smart_invoice'
+                    ]))
+                {
+                    $entities[] = mb_strtoupper(
+                        str_replace('crm_','', $fieldData['type'])
+                    );
+                }
+                if(in_array($fieldData['type'], ['user','group','employee'])){
+                    $entities[] = $fieldData['type'];
+                }
+                if($fieldData['type'] == 'user'){
+                    $entities[] = 'employee';
+                }
+                if(empty($entities) && !empty($fieldData['settings'])){
+                    foreach($fieldData['settings'] as $code=>$val){
+                        if($val == 'Y' && (
+                            in_array($code, ['COMPANY','DEAL','LEAD','CONTACT', 'INVOICE', 'QUOTE', 'REQUISITE', 'SMART_INVOICE'])
+                            ||
+                            strpos(mb_strtolower($code), 'dynamic_')!==false
+                            ))
+                        {
+                            $entities[] = $code;
+                        }
+                    }
+                }
+                //window.awz_helper.openDialogAwzCrm('value_entry','".implode(',',$entities)."', '".$multiple."');return false;
+                $generatedItem['ONCHANGE'][1]['DATA'][] = [
+                    'TYPE'=>'BUTTON',
+                    'ID'=>'multiselect_'.$eniqueId,
+                    'CLASS'=>'left-minus-10',
+                    'TEXT'=>'+',
+                    'ONCHANGE'=>[
+                        [
+                            'ACTION'=>'CALLBACK',
+                            'VALUES'=>'',
+                            'DATA'=>[
+                                ['JS'=>"window.awz_helper.openDialogAwzCrm('value_entry','".implode(',',$entities)."', '".$multiple."');"],
+                            ]
+                        ]
+                    ],
+                ];
+            }
+            elseif(in_array($fieldData['type'], ['date-','datetime-']) && !$fieldData['isMultiple']){
+                if($fieldData['isMultiple']){
+
+                }else{
+                    $generatedItem['ONCHANGE'][1]['DATA'][] = [
+                        'TYPE'=>'DATE',
+                        'ID'=>'value_entry',
+                        'NAME'=>'value_entry',
+                        'CLASS'=>'apply',
+                        'PLACEHOLDER'=>Loc::getMessage('AWZ_ADMIN_HELPER_PARAM_VAL'),
+                        'ONCHANGE'=>[
+                            ['ACTION'=>'RESET_CONTROLS'],
+                            [
+                                'ACTION'=>'CALLBACK',
+                                'DATA'=>[
+                                    ['JS'=>""]
+                                ]
+                            ]
+                        ],
+                        //'useTime'=>true
+                    ];
+                }
+            }
+            else
+            {
+                if($fieldData['isMultiple']){
+                    $generatedItem['ONCHANGE'][1]['DATA'][] = [
+                        'TYPE'=>'DROPDOWN',
+                        'ID'=>'value_entry_type',
+                        'NAME'=>'value_entry_type',
+                        'CLASS'=>'apply',
+                        'ONCHANGE'=>[
+                            ['ACTION'=>'RESET_CONTROLS'],
+                            [
+                                'ACTION'=>'CALLBACK',
+                                'DATA'=>[
+                                    ['JS'=>""]
+                                ]
+                            ]
+                        ],
+                        'ITEMS'=>[
+                            ['VALUE'=>'replace', 'NAME'=>Loc::getMessage('AWZ_ADMIN_HELPER_GRID_BTN_REPL')],
+                            ['VALUE'=>'add', 'NAME'=>Loc::getMessage('AWZ_ADMIN_HELPER_GRID_BTN_ADD')],
+                            ['VALUE'=>'remove', 'NAME'=>Loc::getMessage('AWZ_ADMIN_HELPER_GRID_BTN_DEL')],
+                        ]
+                    ];
+                }
+                $generatedItem['ONCHANGE'][1]['DATA'][] = [
+                    'TYPE' => 'TEXT',
+                    'ID' => 'value_entry',
+                    'NAME' => 'value_entry',
+                    'CLASS' => 'apply',
+                    'PLACEHOLDER' => Loc::getMessage('AWZ_ADMIN_HELPER_PARAM_VAL'),
+                    'ONCHANGE' => [
+                        ['ACTION' => 'RESET_CONTROLS'],
+                        [
+                            'ACTION' => 'CALLBACK',
+                            'DATA' => [
+                                ['JS' => ""]
                             ]
                         ]
                     ]
                 ];
             }
-
+            $generatedItem['ONCHANGE'][1]['DATA'][] = [
+                'TYPE' => 'TEXT',
+                'ID' => 'value_entry_func',
+                'NAME' => 'value_entry_func',
+                'CLASS' => 'apply',
+                'PLACEHOLDER' => Loc::getMessage('AWZ_ADMIN_HELPER_GRID_OBR_JS'),
+                'ONCHANGE' => [
+                    ['ACTION' => 'RESET_CONTROLS'],
+                    [
+                        'ACTION' => 'CALLBACK',
+                        'DATA' => [
+                            ['JS' => ""]
+                        ]
+                    ]
+                ]
+            ];
             $generatedItem['ONCHANGE'][1]['DATA'][] = [
                 'TYPE'=>'BUTTON',
                 'ID'=>'apply_button',
@@ -516,7 +887,6 @@ class Helper {
                 $arParams['ACTION_PANEL']['GROUPS'][0]['ITEMS'],
                 $createItemAction
             );
-
         }
     }
 
@@ -741,31 +1111,421 @@ class Helper {
         }
     }
 
+    public static function getInputCnt(){
+        static $cnt_input;
+        if(!$cnt_input) $cnt_input = 0;
+        $cnt_input++;
+        return $cnt_input;
+    }
+
+    public static function getMultipleInputs($code, $values, $size=20){
+        $cnt_input = self::getInputCnt();
+
+        $html = '<div class="wrp_awz_add_input_block">';
+        $html .= '<input type="hidden" name="type" value="multiple_str">';
+        $cn = 0;
+        if(!is_array($values) || empty($values)){
+            $values = [''];
+        }
+        if(is_array($values)){
+            foreach($values as $v){
+                $html .= '<div class="wrp_awz_add_input"><input type="text" size="'.$size.'" value="'.htmlspecialcharsex($v).'" name="'.$cn.'"></div>';
+                $cn++;
+            }
+        }
+        $html .= '</div>';
+        $html .= '<button class="ui-btn ui-btn-xs ui-btn-light-border" data-nextraw="'.$cn.'" id="awz_add_input_'.$cnt_input.'" onclick="window.awz_nhelper.createInputRow(\'awz_add_input_'.$cnt_input.'\');return false;" href="#">+ '.Loc::getMessage('AWZ_ADMIN_HELPER_GRID_BTN_ADDM').'</button>';
+        $html .= '<div class="wrp_awz_add_input_hide" style="display:none;"><input type="text" value="" size="'.$size.'" name=""></div>';
+        return $html;
+    }
+    public static function getCurrencyInputs($code, $values, $currencyList=[], $size=5,
+                                             $hideBtn=false, $raw_type='multiple_currency'){
+        $cnt_input = self::getInputCnt();
+
+        $html = '<div class="wrp_awz_add_input_block">';
+        $html .= '<input type="hidden" name="type" value="'.$raw_type.'">';
+        $cn = 0;
+        if(!is_array($values) || empty($values)){
+            $values = [''];
+        }
+        if(is_array($values)){
+            foreach($values as $v){
+                $vAr = explode('|',$v);
+                if(isset($vAr[1]) && $vAr[1] && !isset($currencyList[$vAr[1]])){
+                    $currencyList[$vAr[1]] = $vAr[1];
+                }
+                $html .= '<div class="wrp_awz_add_input">';
+                $html .= '<input type="text" size="'.$size.'" value="'.htmlspecialcharsex($vAr[0]).'" name="'.$cn.'">';
+                $html .= '<select name="'.$cn.'_currency">';
+                foreach($currencyList as $val=>$name){
+                    if(isset($vAr[1]) && $vAr[1] == $val){
+                        $html .= '<option value="'.$val.'" selected="selected">'.$name.'</option>';
+                    }else{
+                        $html .= '<option value="'.$val.'">'.$name.'</option>';
+                    }
+                }
+                $html .= '</select>';
+                $html .= '</div>';
+                $cn++;
+            }
+        }
+        $html .= '</div>';
+        if(!$hideBtn){
+            $html .= '<button class="ui-btn ui-btn-xs ui-btn-light-border" data-nextraw="'.$cn.'" id="awz_add_input_'.$cnt_input.'" onclick="window.awz_nhelper.createInputRow(\'awz_add_input_'.$cnt_input.'\');return false;" href="#">+ '.Loc::getMessage('AWZ_ADMIN_HELPER_GRID_BTN_ADDM').'</button>';
+            $html .= '<div class="wrp_awz_add_input_hide" style="display:none;">';
+            $html .= '<input type="text" value="" size="'.$size.'" name="">';
+            $html .= '<select name="_currency">';
+            foreach($currencyList as $val=>$name){
+                $html .= '<option value="'.$val.'">'.$name.'</option>';
+            }
+            $html .= '</select>';
+            $html .= '</div>';
+        }
+        return $html;
+    }
+
+    public static function getAnchorLink($url){
+        if(mb_strlen($url)>30){
+            $url = str_replace(['https://','http://'],'',$url);
+            $url = mb_substr($url,0,23).'...'.mb_substr($url,-5);
+        }
+        return $url;
+    }
+
     public static function formatListField($fieldData, $fieldCode, &$row, $ob=null){
-        static $enumValues = [];
+
+        $entity = $ob->getParam('ENTITY');
+        $entityKey = md5(serialize($ob->getParam('GRID_OPTIONS')));
+        static $fieldsOb;
+        if(!isset($fieldsOb[$entityKey])){
+            $fieldsOb[$entityKey] = null;
+        }
+        if(!$fieldsOb[$entityKey]){
+            $fieldsOb[$entityKey] = $entity::getMap();
+        }
+        if(!isset($fieldsOb[$entityKey][$fieldCode])) return;
+
+        $enumValues = [];
         $primaryCode = null;
         if($ob){
             $primaryCode = $ob->getParam('PRIMARY', 'ID');
         }
-        if(in_array($fieldData['type'], ['iblock_section','iblock_element','crm','group','user','employee','crm_contact', 'crm_company', 'crm_deal', 'crm_lead'])){
+
+        if($fieldData['type'] == 'task_link'){
+            $row->AddViewField($fieldCode, '<a class="open-smart" data-ent="task" data-id="'.$fieldData['format_value'].'" href="#">' . $row->arRes[$fieldCode] . '</a>');
+            return;
+        }
+
+        if(in_array($fieldData['type'], ['iblock_section','iblock_element','crm','group',
+            'user','employee','crm_contact', 'crm_company', 'crm_deal', 'crm_lead',
+            'crm_quote', 'crm_smart_invoice'])){
             if(is_array($row->arRes[$fieldCode])){
                 $fieldData['isMultiple'] = 1;
             }
         }
-        if($fieldData['type'] == 'datetime'){
-            if(strtotime($row->arRes[$fieldCode])){
-                $row->arRes[$fieldCode] = \Bitrix\Main\Type\DateTime::createFromTimestamp(strtotime($row->arRes[$fieldCode]));
-            }else{
-                $row->arRes[$fieldCode] = '';
+
+        if(is_array($row->arRes[$fieldCode])){
+            $row->AddViewField($fieldCode, implode(" | ", $row->arRes[$fieldCode]));
+        }else{
+            $row->AddViewField($fieldCode, $row->arRes[$fieldCode]);
+        }
+
+        $isArValue = is_array($row->arRes[$fieldCode]) && !empty($row->arRes[$fieldCode]);
+        if($fieldData['isMultiple'] && !is_array($row->arRes[$fieldCode]) &&
+            !$row->arRes[$fieldCode])
+        {
+            $isArValue = false;
+        }
+        if($fieldData['isMultiple'] && !is_array($row->arRes[$fieldCode]) &&
+            $row->arRes[$fieldCode] === 'false')
+        {
+            $isArValue = false;
+        }
+        if($fieldData['isMultiple'] && !$isArValue){
+            $row->AddViewField($fieldCode, "");
+        }
+
+        if(in_array($fieldData['type'], [
+            'string','double','float','integer',
+            'iblock_element','iblock_section',
+            'crm_entity','crm','money',
+            'group','user', 'employee',
+            'crm_contact', 'crm_company', 'crm_deal', 'crm_lead',
+            'crm_quote', 'crm_smart_invoice',
+            'url'
+        ])){
+            if(!$fieldData['isReadOnly']) {
+                $size = isset($fieldData['settings']['SIZE']) ? $fieldData['settings']['SIZE'] : 20;
+                $row->AddInputField($fieldCode, ['size'=>$size]);
             }
         }
-        if($fieldData['type'] == 'date'){
-            if(strtotime($row->arRes[$fieldCode])){
-                $row->arRes[$fieldCode] = \Bitrix\Main\Type\Date::createFromTimestamp(strtotime($row->arRes[$fieldCode]));
-            }else{
-                $row->arRes[$fieldCode] = '';
+
+        if(in_array($fieldData['type'],
+            ['enum','enumeration','crm_status','crm_category']
+        ) || ($fieldData['type'] == 'crm_currency' && !empty($fieldData['values']))
+        )
+        {
+            $size = isset($fieldData['settings']['SIZE']) ? $fieldData['settings']['SIZE'] : 3;
+
+            $enumValues = [];
+            foreach($fieldData['values'] as $k=>$v){
+                if(is_array($v)){
+                    if($v['ID'] && $v['VALUE']){
+                        $enumValues[$v['ID']] = $v['VALUE'];
+                    }
+                }else{
+                    if(trim($k))
+                        $enumValues[$k] = $v;
+                }
             }
+
+            if($fieldData['isMultiple']){
+                if($isArValue){
+                    $notEmptyAr = [];
+                    foreach($row->arRes[$fieldCode] as $v){
+                        if(trim($v)){
+                            $notEmptyAr[] = $v;
+                        }
+                    }
+                    $row->arRes[$fieldCode] = $notEmptyAr;
+                    foreach($row->arRes[$fieldCode] as $val){
+                        if(!isset($enumValues[$val])){
+                            $enumValues[$val] = 'ID: '.$val;
+                        }
+                    }
+                }
+                $row->AddSelectField($fieldCode, $enumValues, [
+                    "size" => $size,
+                    "multiple"=>"multiselect"
+                ]);
+                if(!$isArValue){
+                    $row->AddViewField($fieldCode, "");
+                }
+            }else{
+                if(!isset($enumValues[$row->arRes[$fieldCode]])) $enumValues[$row->arRes[$fieldCode]] = $row->arRes[$fieldCode] ? 'ID: '.$row->arRes[$fieldCode] : '-';
+                if(!$fieldData['isReadOnly']){
+                    $row->AddSelectField($fieldCode, $enumValues, array("size" => $size));
+                }
+                if(isset($fieldData['values'][$row->arRes[$fieldCode]])){
+                    $row->AddViewField($fieldCode, $enumValues[$row->arRes[$fieldCode]]);
+                }
+            }
+            return;
+        }elseif($fieldData['type'] == 'url'){
+            if($fieldData['isMultiple']){
+                $values = [];
+                if($isArValue){
+                    foreach($row->arRes[$fieldCode] as $val){
+                        if(!trim($val)) continue;
+                        if(isset($fieldData['fixValue'])){
+                            $anchor = $fieldData['fixValue'];
+                        }else{
+                            $anchor = self::getAnchorLink($val);
+                        }
+                        $values[] = '<a target="_blank" href="'.$val.'">'.$anchor.'</a>';
+                    }
+                    $row->AddViewField($fieldCode, implode("<br>", $values));
+                }
+                if(!$isArValue){
+                    $row->AddViewField($fieldCode, "");
+                }
+                if(!$fieldData['isReadOnly']){
+                    $size = isset($fieldData['settings']['SIZE']) ? $fieldData['settings']['SIZE'] : 20;
+                    $row->AddEditField(
+                        $fieldCode,
+                        self::getMultipleInputs($fieldCode, $row->arRes[$fieldCode], $size)
+                    );
+                }
+            }else{
+                $anchor = $row->arRes[$fieldCode];
+                if(isset($fieldData['fixValue'])){
+                    $anchor = $fieldData['fixValue'];
+                }else{
+                    $anchor = self::getAnchorLink($anchor);
+                }
+                $row->AddViewField($fieldCode, '<a target="_blank" href="'.$row->arRes[$fieldCode].'">'.$anchor.'</a>');
+            }
+            return;
+        }elseif(in_array($fieldData['type'], ['string','double','float','integer'])
+        || ($fieldData['type'] == 'crm_currency' && empty($fieldData['values']))
+        ){
+            $size = isset($fieldData['settings']['SIZE']) ? $fieldData['settings']['SIZE'] : 20;
+            if($fieldData['isMultiple']){
+                $values = [];
+                if($isArValue){
+                    foreach($row->arRes[$fieldCode] as $val){
+                        if(!trim($val)) continue;
+                        $values[] = $val;
+                    }
+                    $row->AddViewField($fieldCode, implode(" / ", $values));
+                }
+                if(!$isArValue){
+                    $row->AddViewField($fieldCode, "");
+                }
+                if(!$fieldData['isReadOnly']){
+                    $row->AddEditField(
+                        $fieldCode,
+                        self::getMultipleInputs($fieldCode, $row->arRes[$fieldCode], $size)
+                    );
+                }
+            }else{
+                if(!$fieldData['isReadOnly']){
+                    $row->AddInputField($fieldCode, array("size" => $size));
+                }
+                if(isset($fieldData['values_format']) && is_array($fieldData['values_format'])){
+                    $currencyFields = ['CURRENCY','CURRENCY_ID','currencyId'];
+                    foreach($currencyFields as $v){
+                        if(isset($fieldData['values_format'][$row->arRes[$v]])){
+                            $row->AddViewField(
+                                $fieldCode,
+                                str_replace('##', $row->arRes[$fieldCode], $fieldData['values_format'][$row->arRes[$v]])
+                            );
+                        }
+                    }
+                }
+
+
+            }
+            //return;
+        }elseif(in_array($fieldData['type'], ['datetime','date'])){
+            $size = isset($fieldData['settings']['SIZE']) ? $fieldData['settings']['SIZE'] : 20;
+            if($fieldData['isMultiple']){
+                $values = [];
+                $valuesShow = [];
+                if($isArValue){
+                    foreach($row->arRes[$fieldCode] as $val){
+                        if(!trim($val)) continue;
+                        $values[] = $val;
+                        $valuesShow[] = str_replace(' 00:00:00','',\Bitrix\Main\Type\DateTime::createFromTimestamp(strtotime($val))->toString());
+                    }
+                    $row->AddViewField($fieldCode, implode(" / ", $valuesShow));
+                }
+                if(!$isArValue){
+                    $row->AddViewField($fieldCode, "");
+                }
+                if(!$fieldData['isReadOnly']){
+                    $row->AddEditField(
+                        $fieldCode,
+                        self::getMultipleInputs($fieldCode, $values, $size)
+                    );
+                }
+            }else{
+                if(strtotime($row->arRes[$fieldCode])){
+                    //$row->arRes[$fieldCode] = \Bitrix\Main\Type\DateTime::createFromTimestamp(strtotime($row->arRes[$fieldCode]));
+                    $row->AddViewField($fieldCode, str_replace(' 00:00:00','',\Bitrix\Main\Type\DateTime::createFromTimestamp(strtotime($row->arRes[$fieldCode]))->toString()));
+                }else{
+                    //$row->arRes[$fieldCode] = '';
+                    $row->AddViewField($fieldCode, $row->arRes[$fieldCode]);
+                }
+                if(!$fieldData['isReadOnly']) {
+                    //$row->AddCalendarField($fieldCode, array(), true);
+                    $row->AddInputField($fieldCode, array());
+                }
+            }
+
+            return;
+        }elseif($fieldData['type'] == 'boolean'){
+            $label = $row->arRes[$fieldCode];
+            if(isset($fieldData['values'][$label]) && is_string($fieldData['values'][$label])){
+                $label = $fieldData['values'][$label];
+            }
+            if(!isset($fieldData['settings'])){
+                if($label == 0 || $label == 'N') {
+                    $label = Loc::getMessage('AWZ_ADMIN_HELPER_NO');
+                }elseif($label == 1 || $label == 'Y') {
+                    $label = Loc::getMessage('AWZ_ADMIN_HELPER_YES');
+                }
+                if(!$fieldData['isReadOnly']) {
+                    $row->AddCheckField($fieldCode);
+                }
+            }else{
+                if($label == 0 || $label == 'N') {
+                    $label = $fieldData['settings']['LABEL'][0] ? $fieldData['settings']['LABEL'][0] : Loc::getMessage('AWZ_ADMIN_HELPER_NO');
+                }elseif($label == 1 || $label == 'Y') {
+                    $label = $fieldData['settings']['LABEL'][1] ? $fieldData['settings']['LABEL'][1] : Loc::getMessage('AWZ_ADMIN_HELPER_YES');
+                }
+            }
+            $row->AddViewField($fieldCode,$label);
+            if(!$fieldData['isReadOnly']) {
+                $okValue = '1';
+                $row->AddEditField($fieldCode, '<label>' . $fieldData['settings']['LABEL_CHECKBOX'] . '</label><input type="checkbox" id="' . htmlspecialcharsbx($fieldCode) . '_control" name="' . htmlspecialcharsbx($fieldCode) . '" value="'.$okValue.'" ' . ($row->arRes[$fieldCode] == '1' || $row->arRes[$fieldCode] == 'true' ? ' checked' : '') . '>');
+            }
+            return;
+        }elseif($fieldData['type'] == 'money'){
+            $size = isset($fieldData['settings']['SIZE']) ? $fieldData['settings']['SIZE'] : 20;
+            $currencies = [];
+            if(isset($fieldData['values_format']) && is_array($fieldData['values_format'])){
+                foreach(array_keys($fieldData['values_format']) as $c_id){
+                    if($c_id)
+                        $currencies[$c_id] = $c_id;
+                }
+            }
+            if($fieldData['isMultiple']){
+                $values = [];
+                if($isArValue){
+                    foreach($row->arRes[$fieldCode] as $val){
+                        if(!trim($val)) continue;
+                        $valNew = '';
+
+                        if(isset($fieldData['values_format']) && is_array($fieldData['values_format'])){
+                            $valueTempAr = explode('|',$val);
+                            if(isset($valueTempAr[1]) && $valueTempAr[1]){
+                                $currencyCode = $valueTempAr[1];
+                                $defTemplate = '## '.$currencyCode;
+                                if(isset($fieldData['values_format'][$currencyCode])){
+                                    $defTemplate = $fieldData['values_format'][$currencyCode];
+                                }
+                                $valNew = str_replace('##', $valueTempAr[0], $defTemplate);
+                            }
+                        }
+
+                        if($valNew){
+                            $values[] = $valNew;
+                        }else{
+                            $values[] = $val;
+                        }
+
+                    }
+                    $row->AddViewField($fieldCode, implode(" / ", $values));
+                }
+                if(!$isArValue){
+                    $row->AddViewField($fieldCode, "");
+                }
+                if(!$fieldData['isReadOnly']){
+                    $row->AddEditField(
+                        $fieldCode,
+                        self::getCurrencyInputs($fieldCode, $row->arRes[$fieldCode], $currencies, 4)
+                    );
+                }
+            }else{
+                if(!$fieldData['isReadOnly']){
+                    $row->AddEditField(
+                        $fieldCode,
+                        self::getCurrencyInputs($fieldCode, [$row->arRes[$fieldCode]], $currencies, 4, true, 'one_currency')
+                    );
+                }
+                if(isset($fieldData['values_format']) && is_array($fieldData['values_format'])){
+                    $valueTempAr = explode('|',$row->arRes[$fieldCode]);
+                    if(isset($valueTempAr[1]) && $valueTempAr[1]){
+                        $currencyCode = $valueTempAr[1];
+                        $defTemplate = '## '.$currencyCode;
+                        if(isset($fieldData['values_format'][$currencyCode])){
+                            $defTemplate = htmlspecialcharsback($fieldData['values_format'][$currencyCode]);
+                        }
+                        $row->AddViewField(
+                            $fieldCode,
+                            str_replace('##', $valueTempAr[0], $defTemplate)
+                        );
+                    }else{
+                        $row->AddViewField($fieldCode,'-');
+                    }
+                }else{
+                    $row->AddViewField($fieldCode,'-');
+                }
+            }
+            return;
         }
+
         if(mb_strtolower($fieldCode) == 'title'){
             $codeEnt = $ob->getParam('SMART_ID');
             if($ob instanceof \TaskList) {
@@ -799,33 +1559,7 @@ class Helper {
                 $row->AddViewField($fieldCode, $addHtml.'<a class="open-smart" data-ent="'.$codeEnt.'" data-id="'.$row->arRes[$ob->getParam('PRIMARY')].'" href="#">'.$row->arRes[$fieldCode].'</a>');
             }
         }else{
-            if($fieldData['type'] == 'string'){
-                if(!$fieldData['isReadOnly']) {
-                    $row->AddInputField($fieldCode, array("size" => $fieldData['settings']['SIZE']));
-                }else{
-                    $row->AddViewField($fieldCode, $row->arRes[$fieldCode]);
-                }
-            }
-            if($fieldData['type'] == 'iblock_element'){
-                if(!$fieldData['isReadOnly']) {
-                    $row->AddInputField($fieldCode, array("size" => $fieldData['settings']['SIZE']));
-                }
-                if(is_array($row->arRes[$fieldCode])){
-                    $row->AddViewField($fieldCode, implode(',',$row->arRes[$fieldCode]));
-                }else{
-                    $row->AddViewField($fieldCode, $row->arRes[$fieldCode]);
-                }
-            }
-            if($fieldData['type'] == 'iblock_section'){
-                if(!$fieldData['isReadOnly']) {
-                    $row->AddInputField($fieldCode, array("size" => $fieldData['settings']['SIZE']));
-                }
-                if(is_array($row->arRes[$fieldCode])){
-                    $row->AddViewField($fieldCode, implode(',',$row->arRes[$fieldCode]));
-                }else{
-                    $row->AddViewField($fieldCode, $row->arRes[$fieldCode]);
-                }
-            }
+
             if($fieldData['type'] == 'crm_multifield'){
                 $value = $row->arRes[$fieldCode];
                 if(is_array($row->arRes[$fieldCode])){
@@ -833,28 +1567,19 @@ class Helper {
                     if(isset($row->arRes[$fieldCode][0]['VALUE'])){
                         foreach($row->arRes[$fieldCode] as $v){
                             if($v['VALUE']){
-                                $valueAr[] = $v['VALUE'];
+                                $type = $v['VALUE_TYPE'] ? $v['VALUE_TYPE'].': ' : '';
+                                $valueAr[] = $type.$v['VALUE'];
                             }
                         }
                     }
                     $row->AddViewField($fieldCode, implode(", ",$valueAr));
                 }
             }
-            if($fieldData['type'] == 'crm_entity'){
-                if(!$fieldData['isReadOnly']) {
-                    $row->AddInputField($fieldCode, array("size" => $fieldData['settings']['SIZE']));
-                }else{
-                    $row->AddViewField($fieldCode, $row->arRes[$fieldCode]);
-                }
-            }
+
             $checkAutoCrm = false;
             $crmEntityCodes = [];
             if($fieldData['type'] == 'crm'){
-                if(!$fieldData['isReadOnly']) {
-                    $row->AddInputField($fieldCode, array("size" => $fieldData['settings']['SIZE']));
-                }else{
-                    $row->AddViewField($fieldCode, $row->arRes[$fieldCode]);
-                }
+
                 $crmEntityCodes = ['deal','lead','company','contact'];
                 if(isset($fieldData['settings']) && is_array($fieldData['settings'])){
                     $entityTempList = [];
@@ -876,7 +1601,8 @@ class Helper {
                                 }
                             }
                         }elseif($row->arRes[$fieldCode]){
-                            $ht_tempIds[] = $row->arRes[$fieldCode];
+                            if($row->arRes[$fieldCode] != 'false')
+                                $ht_tempIds[] = $row->arRes[$fieldCode];
                         }
                         foreach($ht_tempIds as $vId){
                             $ht_temp[] = '<div data-type="'.$entityTempList[0].'" data-id="'.$vId.'" class="awz-autoload-field awz-autoload-'.$entityTempList[0].'-'.$vId.'">'.$vId.'</div>';
@@ -889,7 +1615,11 @@ class Helper {
                     $checkAutoCrm = true;
                 }
             }
-            if($fieldData['type'] && in_array($fieldData['type'], ['iblock_element','iblock_section','group','user','employee','crm_contact', 'crm_company', 'crm_deal', 'crm_lead', 'crm_quote', 'crm_smart_invoice'])){
+            if($fieldData['type'] && in_array($fieldData['type'],
+                    ['iblock_element','iblock_section','group','user',
+                        'employee','crm_contact', 'crm_company', 'crm_deal',
+                        'crm_lead', 'crm_quote', 'crm_smart_invoice'])){
+
                 $finType = $fieldData['type'];
                 $crmEntityCodes[] = $fieldData['type'];
                 if($fieldData['type'] == 'iblock_section'){
@@ -909,11 +1639,7 @@ class Helper {
                 if($fieldData['type'] === 'user'){
                     $crmEntityCodes[] = 'employee';
                 }
-                if(!$fieldData['isReadOnly']) {
-                    $row->AddInputField($fieldCode, array("size" => $fieldData['settings']['SIZE']));
-                }else{
-                    $row->AddViewField($fieldCode, $row->arRes[$fieldCode]);
-                }
+
                 $ht_temp = [];
                 $ht_tempIds = [];
                 if($fieldData['isMultiple']){
@@ -923,7 +1649,8 @@ class Helper {
                         }
                     }
                 }elseif($row->arRes[$fieldCode]){
-                    $ht_tempIds[] = $row->arRes[$fieldCode];
+                    if($row->arRes[$fieldCode] != 'false')
+                        $ht_tempIds[] = $row->arRes[$fieldCode];
                 }
                 foreach($ht_tempIds as $vId){
                     $ht_temp[] = '<div data-type="'.$finType.'" data-id="'.$vId.'" class="awz-autoload-field awz-autoload-'.$finType.'-'.$vId.'">'.$vId.'</div>';
@@ -941,7 +1668,8 @@ class Helper {
                         }
                     }
                 }elseif($row->arRes[$fieldCode]){
-                    $ht_tempIds[] = $row->arRes[$fieldCode];
+                    if($row->arRes[$fieldCode] != 'false')
+                        $ht_tempIds[] = $row->arRes[$fieldCode];
                 }
 
                 foreach($ht_tempIds as $vId){
@@ -980,205 +1708,11 @@ class Helper {
                 $value_tmp = $row->arRes[$fieldCode];
                 $editId = $fieldCode.'_'.$row->arRes[$primaryCode];
                 $fieldHtml = '<div class="wrp" id="'.$editId.'"><input style="width:80%;" value="'.(is_array($value_tmp) ? implode(',',$value_tmp) : $value_tmp).'" name="'.$fieldCode.'" class="main-grid-editor main-grid-editor-text" id="'.$fieldCode.'_control"/><button class="ui-btn ui-btn-xs ui-btn-light-border" onclick="window.awz_helper.openDialogAwzCrm(\''.$editId.'\',\''.implode(',',$crmEntityCodes).'\', \''.($fieldData['isMultiple'] ? 'Y' : 'N').'\');return false;">...</button></div>';
-                $row->AddEditField($fieldCode, $fieldHtml);
-            }
-
-            if($fieldData['type'] == 'enum' || $fieldData['type'] == 'crm_status' || $fieldData['type'] == 'crm_category'){
-
-                if(!$fieldData['isReadOnly']) {
-                    if(!isset($fieldData['values'][''])) $fieldData['values'][''] = '-';
-                    if(!isset($fieldData['values'][$row->arRes[$fieldCode]])) $fieldData['values'][$row->arRes[$fieldCode]] = $row->arRes[$fieldCode];
-                    $row->AddSelectField($fieldCode, $fieldData['values'], array("size" => $fieldData['settings']['SIZE']));
-                }else{
-
-                    if(!isset($enumValues[$fieldCode])){
-                        $enumValues[$fieldCode] = [];
-                        foreach($fieldData['values'] as $key=>$item){
-                            if(!is_array($item)){
-                                $enumValues[$fieldCode][$key] = $item;
-                            }else{
-                                if($item['ID'] && $item['VALUE']){
-                                    $enumValues[$fieldCode][$item['ID']] = $item;
-                                }
-                            }
-                        }
-                    }
-
-                    if(isset($enumValues[$fieldCode][$row->arRes[$fieldCode]])){
-                        if(is_array($enumValues[$fieldCode][$row->arRes[$fieldCode]])){
-                            $row->AddViewField($fieldCode, $enumValues[$fieldCode][$row->arRes[$fieldCode]]['VALUE'] ?? $row->arRes[$fieldCode]);
-                        }else{
-                            $row->AddViewField($fieldCode, $enumValues[$fieldCode][$row->arRes[$fieldCode]] ?? $row->arRes[$fieldCode]);
-                        }
-                    }
-
-                }
-                if(isset($fieldData['values'][$row->arRes[$fieldCode]]) && is_string($fieldData['values'][$row->arRes[$fieldCode]])){
-                    $row->AddViewField($fieldCode, $fieldData['values'][$row->arRes[$fieldCode]]);
-                }
-            }
-            if($fieldData['type'] == 'enumeration'){
-                if(!$fieldData['isReadOnly']) {
-                    if(!isset($fieldData['values'][''])) $fieldData['values'][''] = '-';
-                    if(!isset($fieldData['values'][$row->arRes[$fieldCode]])) $fieldData['values'][$row->arRes[$fieldCode]] = $row->arRes[$fieldCode];
-                    $row->AddSelectField($fieldCode, $fieldData['values'], array("size" => $fieldData['settings']['SIZE']));
-                }
-                if(isset($fieldData['values'][$row->arRes[$fieldCode]]) && is_string($fieldData['values'][$row->arRes[$fieldCode]])){
-                    $row->AddViewField($fieldCode, $fieldData['values'][$row->arRes[$fieldCode]]);
-                }
-            }
-            if($fieldData['type'] == 'double'){
-                if(!$fieldData['isReadOnly']) {
-                    $row->AddInputField($fieldCode, array("size" => $fieldData['settings']['SIZE']));
-                }else{
-                    $row->AddViewField($fieldCode, $row->arRes[$fieldCode]);
-                }
-            }
-            if($fieldData['type'] == 'float'){
-                if(!$fieldData['isReadOnly']) {
-                    $row->AddInputField($fieldCode, array("size" => $fieldData['settings']['SIZE']));
-                }else{
-                    $row->AddViewField($fieldCode, $row->arRes[$fieldCode]);
-                }
-            }
-            if($fieldData['type'] == 'integer'){
-                if(!$fieldData['isReadOnly']) {
-                    $row->AddInputField($fieldCode, array("size" => $fieldData['settings']['SIZE']));
-                }else{
-                    $row->AddViewField($fieldCode, $row->arRes[$fieldCode]);
-                }
-            }
-            if($fieldData['type'] == 'date'){
-                if(!$fieldData['isReadOnly']) {
-                    $row->AddCalendarField($fieldCode, array());
-                }else{
-                    $row->AddViewField($fieldCode, $row->arRes[$fieldCode]);
-                }
-            }
-            if($fieldData['type'] == 'datetime'){
-                if(!$fieldData['isReadOnly']) {
-                    $row->AddCalendarField($fieldCode, array(), true);
-                }else{
-                    $row->AddViewField($fieldCode, $row->arRes[$fieldCode]);
-                }
-            }
-            if($fieldData['type'] == 'boolean'){
-                if(!$fieldData['isReadOnly']) {
-                    if(!isset($fieldData['settings'])){
-                        $row->AddCheckField($fieldCode);
-                    }else{
-                        $label = $row->arRes[$fieldCode];
-                        if($label == 0) $label = ($fieldData['settings']['LABEL'][0]) ?? Loc::getMessage('AWZ_ADMIN_HELPER_NO');
-                        if($label == 1) $label = ($fieldData['settings']['LABEL'][1]) ?? Loc::getMessage('AWZ_ADMIN_HELPER_YES');
-                        $row->AddViewField($fieldCode,$label);
-                        if(!$fieldData['isReadOnly']) {
-                            $row->AddEditField($fieldCode, '<label>' . $fieldData['settings']['LABEL_CHECKBOX'] . '</label><input type="checkbox" id="' . htmlspecialcharsbx($fieldCode) . '_control" name="' . htmlspecialcharsbx($fieldCode) . '" value="Y" ' . ($row->arRes[$fieldCode] == '1' || $row->arRes[$fieldCode] === true ? ' checked' : '') . '>');
-                        }
-                    }
-                }else{
-                    $row->AddViewField($fieldCode, $row->arRes[$fieldCode]);
-                }
-                if(isset($fieldData['values'][$row->arRes[$fieldCode]]) && is_string($fieldData['values'][$row->arRes[$fieldCode]])){
-                    $row->AddViewField($fieldCode, $fieldData['values'][$row->arRes[$fieldCode]]);
-                }
-            }
-            if($fieldData['type'] == 'url'){
-                $anchor = $row->arRes[$fieldCode];
-                if(isset($fieldData['fixValue'])){
-                    $anchor = $fieldData['fixValue'];
-                }
-                if(mb_strlen($anchor)>20){
-                    $anchor = str_replace(['https://','http://'],'',$anchor);
-                    $anchor = mb_substr($anchor,0,13).'...'.mb_substr($anchor,-5);
-                }
-                $row->AddViewField($fieldCode, '<a target="_blank" href="'.$row->arRes[$fieldCode].'">'.$anchor.'</a>');
-                if(!$fieldData['isReadOnly']) {
-                    $row->AddInputField($fieldCode, array("size" => $fieldData['settings']['SIZE']));
-                }
-            }
-            if($fieldData['type'] == 'money'){
-                $val = explode('|', $row->arRes[$fieldCode]);
-                /*$row->aFields[$fieldCode]["edit"] = array(
-
-                );*/
-                //$row->aFields['id']['edit']['type'] == 'money';
-                /*$row->AddMoneyField($fieldCode, array(
-                    'PRICE'=>$val[0],
-                    'CURRENCY'=>$val[1],
-                    'CURRENCY_LIST'=>[[$val[1] => $val[1]]],
-                    'HIDDEN'=>[['NAME'=>'test', 'VALUE'=>'test'],['NAME'=>'test2', 'VALUE'=>'test2']],
-                    'ATTRIBUTES'=>[
-                            'PLACEHOLDER'=>''
-                        //'CURRENCY_LIST'=>[$val[1] => $val[1]]
-                    ]
-                ));*/
-                if(!$fieldData['isReadOnly']) {
-                    $row->AddInputField($fieldCode);
-                }else{
-                    $row->AddViewField($fieldCode, $row->arRes[$fieldCode]);
-                }
-            }
-
-            if(false && $fieldData['type'] == 'user'){
                 if(!$fieldData['isReadOnly']){
-                    /*$row->AddEditField(
-                        $fieldCode,
-                        '<div class="ui-ctl ui-ctl-after-icon">
-                        <a class="ui-ctl-after ui-ctl-icon-dots open-user-dialog" href="#" onclick="window.awz_helper.openUserDialog(\'' .'.open-user-dialog-'.$row->arRes['id']. '\');return false;"></a>
-                        <input id="' . htmlspecialcharsbx($fieldCode) . '_control" name="' . htmlspecialcharsbx($fieldCode) . '" value="'.$row->arRes[$fieldCode].'" class="ui-ctl-element ui-ctl-textbox main-grid-editor main-grid-editor-text open-user-dialog-'.$row->arRes['id'].'">
-                        </div>');*/
-                    $row->AddInputField($fieldCode, array("size" => $fieldData['settings']['SIZE']));
-                }
-                $userData = [];
-                if(method_exists($ob, 'getUserData')){
-                    $userData = $ob->getUserData(intval($row->arRes[$fieldCode]));
-                }elseif($fieldCode == 'createdBy'){
-                    $userData = $row->arRes['creator'];
-                }elseif($fieldCode == 'responsibleId'){
-                    $userData = $row->arRes['responsible'];
-                }
-
-                if(!empty($userData) && is_array($userData)){
-                    $html = '<div class="tasks-grid-username-wrapper"><a class="tasks-grid-username open-smart" data-ent="user" data-id="'.$row->arRes[$fieldCode].'" href="#"><span class="tasks-grid-avatar ui-icon ui-icon-common-user"><i style="background-image: url(\''.$userData['icon'].'\')"></i></span><span class="tasks-grid-username-inner">'.$userData['name'].'</span><span class="tasks-grid-filter-remove"></span></a></div>';
-                    $row->AddViewField($fieldCode, $html);
-                }else{
-                    $user = $ob->getUser(intval($row->arRes[$fieldCode]));
-                    $userName = '';
-                    if(!empty($user)){
-                        $userName = '['.intval($row->arRes[$fieldCode]).'] '.htmlspecialcharsbx($user['NAME']).' '.htmlspecialcharsbx($user['LAST_NAME']);
-                    }else{
-                        $userName = $row->arRes[$fieldCode];
-                    }
-                    $row->AddViewField($fieldCode, '<a class="open-smart" data-ent="user" data-id="'.$row->arRes[$fieldCode].'" href="#">'.$userName.'</a>');
-                }
-
-            }
-            if(false && $fieldData['type'] == 'group'){
-                if(!$fieldData['isReadOnly']) {
-                    $row->AddInputField($fieldCode, array("size" => $fieldData['settings']['SIZE']));
-                }
-                if(intval($row->arRes[$fieldCode])){
-
-                    $groupData = $row->arRes['group'];
-                    if(!empty($groupData) && is_array($groupData)){
-                        if(!$groupData['image']) $groupData['image'] = '/bitrix/js/ui/icons/b24/images/ui-user-group.svg';
-                        $html = '<a class="tasks-grid-group open-smart" data-ent="group" data-id="'.$row->arRes[$fieldCode].'" href="#"><span class="tasks-grid-avatar ui-icon ui-icon-common-user-group"><i style="background-image: url(\''.$groupData['image'].'\')"></i></span><span class="tasks-grid-group-inner">'.$groupData['name'].'</span><span class="tasks-grid-filter-remove"></span></a>';
-                        $row->AddViewField($fieldCode, $html);
-                    }else{
-                        $user = $ob->getGroup(intval($row->arRes[$fieldCode]));
-                        $userName = '';
-                        if(!empty($user)){
-                            $userName = '['.intval($row->arRes[$fieldCode]).'] '.htmlspecialcharsbx($user['NAME']);
-                        }else{
-                            $userName = $row->arRes[$fieldCode];
-                        }
-                        $row->AddViewField($fieldCode, '<a class="open-smart" data-ent="group" data-id="'.$row->arRes[$fieldCode].'" href="#">'.$userName.'</a>');
-                    }
-
-                }else{
-                    $row->AddViewField($fieldCode,'');
+                    $row->AddEditField($fieldCode, $fieldHtml);
                 }
             }
+
 
         }
 
@@ -1429,6 +1963,63 @@ class Helper {
         }
         unset($params);
         return $defaultOptions;
+    }
+
+    public static function checkDissabledFilter(array $arParams, \Bitrix\Main\ORM\Fields\Field $obField)
+    {
+        if(!isset($arParams['GRID_OPTIONS_PREFILTER'])) return false;
+        if(empty($arParams['GRID_OPTIONS_PREFILTER'])) return false;
+        static $disableFilterKeys = null;
+        if($disableFilterKeys === null){
+            $disableFilterKeys = [];
+            foreach($arParams['GRID_OPTIONS_PREFILTER'] as $code=>$filter){
+                $code = preg_replace('/([^0-9a-z])/is','',mb_strtolower($code));
+                if($code) $disableFilterKeys[] = $code;
+            }
+        }
+        if(!$obField->getParameter('isFiltered')) return false;
+        $key = preg_replace('/([^0-9a-z])/is','',mb_strtolower($obField->getColumnName()));
+        if(!$key) return false;
+        return in_array($key, $disableFilterKeys);
+    }
+
+    public static function preformatField($field){
+        if(isset($field['type'])){
+            if(isset($field['listLabel']) && $field['listLabel']){
+                $field['title'] = $field['listLabel'];
+            }
+            if($field['type'] == 'enumeration' && isset($field['items'])){
+                if(!empty($field['items'])){
+                    $field['values'] = [''=>'-'];
+                    foreach($field['items'] as $itm){
+                        if(is_array($itm) && isset($itm['VALUE'], $itm['ID']))
+                            $field['values'][$itm['ID']] = $itm['VALUE'];
+                    }
+                }
+            }
+        }
+        return $field;
+    }
+
+    public static function prepareCrmDataFields(array $allFields, array $batchAr = []){
+        foreach($allFields as $fieldCode=>$field){
+            if(($field['type'] == 'crm_currency') || ($field['type'] == 'money')){
+                $batchAr['crm_currency'] = [
+                    'method'=>'crm.currency.list',
+                    'params'=> []
+                ];
+            }elseif($field['type'] == 'crm_status' && $field['statusType']){
+                $key = mb_strtolower($field['statusType']);
+                $batchAr[$key] = [
+                    'method'=>'crm.status.list',
+                    'params'=> [
+                        'order'=>["SORT"=>"ASC"],
+                        'filter'=>["ENTITY_ID"=>$field['statusType']],
+                    ]
+                ];
+            }
+        }
+        return $batchAr;
     }
 
 }
