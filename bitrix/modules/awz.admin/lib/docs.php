@@ -51,6 +51,12 @@ class DocsTable extends ORM\Data\DataManager
                     )
                 ));
             }
+            if($field['type'] == 'doc_values'){
+                $fieldOrm = (new ORM\Fields\StringField($key, array(
+                        'title' => $field['title']
+                    )
+                ));
+            }
             if($field['type'] == 'url'){
                 $fieldOrm = (new ORM\Fields\StringField($key, array(
                         'title' => $field['title']

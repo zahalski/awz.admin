@@ -127,9 +127,11 @@ class Option extends Grid\Options {
     {
         $aColsTmp = explode(",", $columns);
         $aCols = array();
-        foreach($aColsTmp as $col)
+        foreach($aColsTmp as $col){
             if(($col = trim($col)) <> "")
                 $aCols[] = $col;
+        }
+
         $this->all_options["views"][$this->currentView]["columns"] = implode(",", $aCols);
     }
 

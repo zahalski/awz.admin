@@ -1184,6 +1184,27 @@ class Helper {
         return $html;
     }
 
+    public static function getLink($url, $fieldData){
+        if(is_array($fieldData) && isset($fieldData['settings']['domain'])){
+            if(mb_substr($url,0,1)=='/'){
+                if(mb_strpos($fieldData['settings']['domain'],'://')!==false){
+                    return $fieldData['settings']['domain'].$url;
+                }
+                return 'https://'.$fieldData['settings']['domain'].$url;
+            }
+            if(mb_substr($url, 0,6)=='https:'){
+
+            }elseif(mb_substr($url, 0,5)=='http:'){
+
+            }elseif(mb_substr($url,0,1)!='/'){
+                if(mb_strpos($fieldData['settings']['domain'],'://')!==false){
+                    return $fieldData['settings']['domain'].'/'.$url;
+                }
+                return 'https://'.$fieldData['settings']['domain'].'/'.$url;
+            }
+        }
+        return $url;
+    }
     public static function getAnchorLink($url){
         if(mb_strlen($url)>30){
             $url = str_replace(['https://','http://'],'',$url);
@@ -1218,7 +1239,7 @@ class Helper {
 
         if(in_array($fieldData['type'], ['iblock_section','iblock_element','crm','group',
             'user','employee','crm_contact', 'crm_company', 'crm_deal', 'crm_lead',
-            'crm_quote', 'crm_smart_invoice'])){
+            'crm_quote', 'crm_smart_invoice', 'awzuientity'])){
             if(is_array($row->arRes[$fieldCode])){
                 $fieldData['isMultiple'] = 1;
             }
@@ -1252,7 +1273,7 @@ class Helper {
             'group','user', 'employee',
             'crm_contact', 'crm_company', 'crm_deal', 'crm_lead',
             'crm_quote', 'crm_smart_invoice',
-            'url'
+            'url','awzuientity'
         ])){
             if(!$fieldData['isReadOnly']) {
                 $size = isset($fieldData['settings']['SIZE']) ? $fieldData['settings']['SIZE'] : 20;
@@ -1322,7 +1343,8 @@ class Helper {
                         }else{
                             $anchor = self::getAnchorLink($val);
                         }
-                        $values[] = '<a target="_blank" href="'.$val.'">'.$anchor.'</a>';
+                        $val = self::getLink($val, $fieldData);
+                        $values[] = '<a target="_blank" class="awz-link" href="'.$val.'">'.$anchor.'</a>';
                     }
                     $row->AddViewField($fieldCode, implode("<br>", $values));
                 }
@@ -1343,7 +1365,9 @@ class Helper {
                 }else{
                     $anchor = self::getAnchorLink($anchor);
                 }
-                $row->AddViewField($fieldCode, '<a target="_blank" href="'.$row->arRes[$fieldCode].'">'.$anchor.'</a>');
+                $val = $row->arRes[$fieldCode];
+                $val = self::getLink($val, $fieldData);
+                $row->AddViewField($fieldCode, '<a target="_blank" class="awz-link" href="'.$val.'">'.$anchor.'</a>');
             }
             return;
         }elseif(in_array($fieldData['type'], ['string','double','float','integer'])
@@ -1395,6 +1419,7 @@ class Helper {
                 if($isArValue){
                     foreach($row->arRes[$fieldCode] as $val){
                         if(!trim($val)) continue;
+                        if($val === 'false') continue;
                         $values[] = $val;
                         $valuesShow[] = str_replace(' 00:00:00','',\Bitrix\Main\Type\DateTime::createFromTimestamp(strtotime($val))->toString());
                     }
@@ -1465,6 +1490,7 @@ class Helper {
                 if($isArValue){
                     foreach($row->arRes[$fieldCode] as $val){
                         if(!trim($val)) continue;
+                        if($val === 'false') continue;
                         $valNew = '';
 
                         if(isset($fieldData['values_format']) && is_array($fieldData['values_format'])){
@@ -1524,6 +1550,16 @@ class Helper {
                 }
             }
             return;
+        }elseif($fieldData['type']=='doc_values'){
+            $values = [];
+            if(!empty($row->arRes[$fieldCode]) && is_array($row->arRes[$fieldCode])){
+                foreach($row->arRes[$fieldCode] as $keyValue=>$value){
+                    if($value)
+                        $values[] = $keyValue.': '.(is_array($value) ? implode(', ', $value) : $value);
+                }
+                $row->AddViewField($fieldCode, implode('<br>', $values));
+            }
+            return;
         }
 
         if(mb_strtolower($fieldCode) == 'title'){
@@ -1541,14 +1577,6 @@ class Helper {
             }
         }elseif(mb_strtolower($fieldCode) == 'id'){
             $addHtml = '';
-            if(Loader::includeModule('awz.bxapistats')){
-                static $setStat = false;
-                if(!$setStat){
-                    $setStat = true;
-                    $tracker = \Awz\BxApiStats\Tracker::getInstance();
-                    $addHtml = \Awz\BxApiStats\Helper::getHtmlStats($tracker, $ob->getParam('TABLEID'));
-                }
-            }
             $codeEnt = $ob->getParam('SMART_ID');
             if($ob instanceof \TaskList) {
                 $codeEnt = 'task';
@@ -1578,7 +1606,7 @@ class Helper {
 
             $checkAutoCrm = false;
             $crmEntityCodes = [];
-            if($fieldData['type'] == 'crm'){
+            if(($fieldData['type'] == 'crm') || ($fieldData['type'] == 'awzuientity')){
 
                 $crmEntityCodes = ['deal','lead','company','contact'];
                 if(isset($fieldData['settings']) && is_array($fieldData['settings'])){
@@ -1591,21 +1619,23 @@ class Helper {
                     if(!empty($entityTempList)){
                         $crmEntityCodes = $entityTempList;
                     }
-                    if(count($entityTempList)==1){
+                    if(count($entityTempList)==1 && ($fieldData['type'] != 'awzuientity')){
                         $ht_temp = [];
                         $ht_tempIds = [];
                         if($fieldData['isMultiple']){
                             if(is_array($row->arRes[$fieldCode])){
                                 foreach($row->arRes[$fieldCode] as $v){
+                                    if(!trim($v)) continue;
+                                    if($v === 'false') continue;
                                     $ht_tempIds[] = $v;
                                 }
                             }
                         }elseif($row->arRes[$fieldCode]){
-                            if($row->arRes[$fieldCode] != 'false')
+                            if($row->arRes[$fieldCode] !== 'false')
                                 $ht_tempIds[] = $row->arRes[$fieldCode];
                         }
                         foreach($ht_tempIds as $vId){
-                            $ht_temp[] = '<div data-type="'.$entityTempList[0].'" data-id="'.$vId.'" class="awz-autoload-field awz-autoload-'.$entityTempList[0].'-'.$vId.'">'.$vId.'</div>';
+                            $ht_temp[] = '<div data-type="'.$entityTempList[0].'" data-id="'.$vId.'" class="awz-autoload-field awz-autoload-'.$entityTempList[0].'-'.$vId.'"><div class="awz-grid-item1-wrapper">ID: '.$vId.'</div></div>';
                         }
                         $row->AddViewField($fieldCode, implode("",$ht_temp));
                     }else{
@@ -1645,15 +1675,17 @@ class Helper {
                 if($fieldData['isMultiple']){
                     if(is_array($row->arRes[$fieldCode])){
                         foreach($row->arRes[$fieldCode] as $v){
+                            if(!trim($v)) continue;
+                            if($v === 'false') continue;
                             $ht_tempIds[] = $v;
                         }
                     }
                 }elseif($row->arRes[$fieldCode]){
-                    if($row->arRes[$fieldCode] != 'false')
+                    if($row->arRes[$fieldCode] !== 'false')
                         $ht_tempIds[] = $row->arRes[$fieldCode];
                 }
                 foreach($ht_tempIds as $vId){
-                    $ht_temp[] = '<div data-type="'.$finType.'" data-id="'.$vId.'" class="awz-autoload-field awz-autoload-'.$finType.'-'.$vId.'">'.$vId.'</div>';
+                    $ht_temp[] = '<div data-type="'.$finType.'" data-id="'.$vId.'" class="awz-autoload-field awz-autoload-'.$finType.'-'.$vId.'"><div class="awz-grid-item1-wrapper">ID: '.$vId.'</div></div>';
                 }
                 $row->AddViewField($fieldCode, implode("",$ht_temp));
             }
@@ -1664,42 +1696,34 @@ class Helper {
                 if($fieldData['isMultiple']){
                     if(is_array($row->arRes[$fieldCode])){
                         foreach($row->arRes[$fieldCode] as $v){
+                            if(!trim($v)) continue;
+                            if($v === 'false') continue;
                             $ht_tempIds[] = $v;
                         }
                     }
                 }elseif($row->arRes[$fieldCode]){
-                    if($row->arRes[$fieldCode] != 'false')
+                    if($row->arRes[$fieldCode] !== 'false')
                         $ht_tempIds[] = $row->arRes[$fieldCode];
                 }
 
                 foreach($ht_tempIds as $vId){
+                    $vId = trim($vId);
+                    if(!$vId) continue;
+                    if($vId === 'false') continue;
                     $intId = $vId;
+                    $type_temp = $fieldData['type'];
                     if(mb_strpos($vId, '_')!==false){
                         $vIdAr = explode('_', $vId);
-                        if($vIdAr[0] == 'CO'){
-                            $type_temp = 'crm_company';
-                            $intId = $vIdAr[1];
-                        }elseif($vIdAr[0] == 'C'){
-                            $type_temp = 'crm_contact';
-                            $intId = $vIdAr[1];
-                        }elseif($vIdAr[0] == 'D'){
-                            $type_temp = 'crm_deal';
-                            $intId = $vIdAr[1];
-                        }elseif($vIdAr[0] == 'L'){
-                            $type_temp = 'crm_lead';
-                            $intId = $vIdAr[1];
-                        }elseif($vIdAr[0] == 'Q'){
-                            $type_temp = 'crm_quote';
-                            $intId = $vIdAr[1];
-                        }elseif($vIdAr[0] == 'SI'){
-                            $type_temp = 'crm_smart_invoice';
-                            $intId = $vIdAr[1];
-                        }elseif(mb_substr($vIdAr[0],0,1) == 'T'){
-                            $type_temp = 'DYNAMIC_'.hexdec(mb_substr($vIdAr[0],1));
-                            $intId = $vIdAr[1];
-                        }
+                        $type_temp_ = self::getCrmTypeFromShort($vIdAr[0]);
+                        if($type_temp_) $type_temp = $type_temp_;
+                        $intId = $vIdAr[1];
                     }
-                    $ht_temp[] = '<div data-type="'.$type_temp.'" data-id="'.$intId.'" data-ido="'.$vId.'" class="awz-autoload-field awz-autoload-'.$type_temp.'-'.$intId.'">'.$vId.'</div>';
+                    if($fieldData['type'] == 'awzuientity'){
+                        $ht_temp[] = '<div data-type="'.$type_temp.'" data-id="'.$intId.'" data-ido="'.$vId.'" class="awz-autoload-field awz-autoload-'.$type_temp.'-'.$intId.'"><div class="awz-grid-item1-wrapper">ID: '.$intId.'</div></div>';
+                    }else{
+                        $ht_temp[] = '<div data-type="'.$type_temp.'" data-id="'.$intId.'" data-ido="'.$vId.'" class="awz-autoload-field awz-autoload-'.$type_temp.'-'.$intId.'"><div class="awz-grid-item1-wrapper">ID: '.$intId.'</div></div>';
+                    }
+
                 }
                 $row->AddViewField($fieldCode, implode("",$ht_temp));
             }
@@ -1770,6 +1794,12 @@ class Helper {
         }
         if($obField instanceof \Bitrix\Main\ORM\Fields\EnumField){
 
+            if(empty($options['values'])){
+                $valAr = $obField->getValues();
+                foreach($valAr as $v){
+                    $options['values'][$v] = $v;
+                }
+            }
             if(empty($options['values'])) return [];
             return [
                 'id'=>$filterId,
@@ -1969,18 +1999,17 @@ class Helper {
     {
         if(!isset($arParams['GRID_OPTIONS_PREFILTER'])) return false;
         if(empty($arParams['GRID_OPTIONS_PREFILTER'])) return false;
-        static $disableFilterKeys = null;
-        if($disableFilterKeys === null){
+        static $disableFilterKeys;
+        if(!$disableFilterKeys){
             $disableFilterKeys = [];
             foreach($arParams['GRID_OPTIONS_PREFILTER'] as $code=>$filter){
                 $code = preg_replace('/([^0-9a-z])/is','',mb_strtolower($code));
                 if($code) $disableFilterKeys[] = $code;
             }
         }
-        if(!$obField->getParameter('isFiltered')) return false;
         $key = preg_replace('/([^0-9a-z])/is','',mb_strtolower($obField->getColumnName()));
         if(!$key) return false;
-        return in_array($key, $disableFilterKeys);
+        return in_array($key, $disableFilterKeys) || !$obField->getParameter('isFiltered');
     }
 
     public static function preformatField($field){
@@ -2017,9 +2046,51 @@ class Helper {
                         'filter'=>["ENTITY_ID"=>$field['statusType']],
                     ]
                 ];
+            }elseif($field['type'] == 'group'){
+                $key = mb_strtolower('groups');
+                $batchAr[$key] = [
+                    'method'=>'sonet_group.get',
+                    'params'=> [
+                        'order'=>["NAME"=>"ASC"],
+                        'FILTER'=>[],
+                    ]
+                ];
             }
         }
         return $batchAr;
+    }
+
+    public static function getCrmTypeFromShort(string $short):string
+    {
+        $short = trim($short);
+        $type_temp = '';
+        if($short == 'CO'){
+            $type_temp = 'crm_company';
+        }elseif($short == 'C'){
+            $type_temp = 'crm_contact';
+        }elseif($short == 'D'){
+            $type_temp = 'crm_deal';
+        }elseif($short == 'L'){
+            $type_temp = 'crm_lead';
+        }elseif($short == 'Q'){
+            $type_temp = 'crm_quote';
+        }elseif($short == 'SI'){
+            $type_temp = 'crm_smart_invoice';
+        }elseif($short == 'TASK'){
+            $type_temp = 'task';
+        }elseif($short == 'WORK'){
+            $type_temp = 'work';
+        }elseif(mb_substr($short,0,1) == 'T'){
+            $type_temp = 'DYNAMIC_'.hexdec(mb_substr($short,1));
+        }elseif(mb_substr($short,0,3) == 'RPA'){
+            $short = str_replace('RPA_','RPA',$short);
+            return $short;
+        }elseif(mb_substr($short,0,2) == 'IB'){
+            return $short;
+        }elseif(mb_substr($short, 0, 4) == 'HOOK'){
+            $type_temp = $short;
+        }
+        return $type_temp;
     }
 
 }

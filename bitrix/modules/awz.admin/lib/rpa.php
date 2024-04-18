@@ -6,12 +6,11 @@ use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ORM;
 use Bitrix\Main\Result;
-use Bitrix\Main\Text\StringHelper;
 use Bitrix\Main\Type\DateTime;
 
 Loc::loadMessages(__FILE__);
 
-class LeadTable extends ORM\Data\DataManager
+class RpaTable extends ORM\Data\DataManager
 {
     public static $fields;
 
@@ -32,7 +31,7 @@ class LeadTable extends ORM\Data\DataManager
             'crm','crm_company', 'crm_lead','crm_contact','crm_deal',
             'url', 'string','double','float','integer',
             'date', 'datetime',
-            'money','user','group','employee','awzuientity'
+            'money','user','group','employee'
         ];
         if(in_array($type, $supportsType)){
             return true;
@@ -43,10 +42,9 @@ class LeadTable extends ORM\Data\DataManager
     public static function getMap()
     {
         $fields = array();
-
         //echo'<pre>';print_r(self::$fields);echo'</pre>';
+        //die();
         foreach(self::$fields as $key=>$field){
-
             $fieldOrm = null;
             if($field['isMultiple'] && !self::isMultipleSupport($field['type'])){
                 continue;
@@ -98,13 +96,6 @@ class LeadTable extends ORM\Data\DataManager
                 ));
             }
             if($field['type'] == 'crm'){
-                $fieldOrm = (new ORM\Fields\StringField($key, array(
-                        'title' => $field['title'],
-                        'settings'=>$field['settings']
-                    )
-                ));
-            }
-            if($field['type'] == 'awzuientity'){
                 $fieldOrm = (new ORM\Fields\StringField($key, array(
                         'title' => $field['title'],
                         'settings'=>$field['settings']
@@ -222,16 +213,27 @@ class LeadTable extends ORM\Data\DataManager
                 ));
             }
 
+            /*if($field['type'] == 'iblock_section'){
+                $fieldOrm = (new ORM\Fields\StringField($key, array(
+                        'title' => $field['title'],
+                        'settings'=>$field['settings']
+                    )
+                ));
+            }*/
+            /*if($field['type'] == 'iblock_element'){
+                $fieldOrm = (new ORM\Fields\StringField($key, array(
+                        'title' => $field['title'],
+                        'settings'=>$field['settings']
+                    )
+                ));
+            }*/
+
+
 
             if($fieldOrm && $field['isRequired']){
                 $fieldOrm->configureRequired();
             }
             if($fieldOrm){
-                if($field['sort']){
-                    $fieldOrm->setParameter('sortable', $field['sort']);
-                }else{
-                    $fieldOrm->setParameter('sortable', false);
-                }
                 $fieldOrm->setParameter('isReadOnly', $field['isReadOnly']);
                 if(!isset($field['noFilter'])) $field['noFilter'] = '';
                 $fieldOrm->setParameter('isFiltered', !$field['noFilter']);

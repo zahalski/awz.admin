@@ -98,7 +98,12 @@ class IList
                 $filterRealId = substr($filterRealId,1);
                 $filterItem['filterable'] = '%';
             }
-            $obField = $entity::getEntity()->getField($filterRealId);
+            $obField = null;
+            try{
+                $obField = $entity::getEntity()->getField($filterRealId);
+            }catch (\Bitrix\Main\ArgumentException $e){
+
+            }
             if(!$obField) continue;
             if(!isset($filterItem['name'])){
                 $filterItem['name'] = $obField->getTitle();
