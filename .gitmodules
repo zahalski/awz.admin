@@ -1,0 +1,3 @@
+[submodule "bxbuild"]
+	path = bxbuild
+	url = git@github.com:zahalski/awz.bxbuildtools.git

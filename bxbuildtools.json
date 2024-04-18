@@ -6,6 +6,7 @@
   "readme_file": "../README.md",
   "changelog_file": "../CHANGELOG.md",
   "lang_prefix": ["AWZ_ADMIN_"],
+  "market_auth": "d:/last-git/market_auth.json",
   "disabled_lang": [
     "AWZ_PARTNER_NAME", "AWZ_PARTNER_URI", "ACCESS_DENIED",
     "MAIN_ADMIN_MENU_DELETE", "MAIN_ADMIN_MENU_EDIT",
