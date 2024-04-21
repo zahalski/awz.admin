@@ -16,3 +16,9 @@
 
 <!-- desc-end -->
 
+<!-- cl-start -->
+## История версий
+
+https://github.com/zahalski/awz.admin/blob/master/CHANGELOG.md
+
+<!-- cl-end -->
