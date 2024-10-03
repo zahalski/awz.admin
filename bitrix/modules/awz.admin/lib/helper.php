@@ -91,7 +91,11 @@ class Helper {
 
 
                 $tmp = explode('||',$itm['VALUE']);
-                $tmp[2] = explode(',',$tmp[2]);
+                if($tmp[2]){
+                    $tmp[2] = explode(',',$tmp[2]);
+                }else{
+                    $tmp[2] = [];
+                }
                 $tmp[3] = explode(',',$tmp[3]);
                 $tmp[4] = explode(',',$tmp[4]);
                 //echo'<pre>';print_r($tmp);echo'</pre>';
