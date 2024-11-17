@@ -271,7 +271,7 @@ class Helper {
         if(!isset($arParams['BP_ACTION'])) return;
         if(empty($arParams['BP_ACTION'])) return;
         $generatedItem = [];
-        $generatedItem['NAME'] = mb_strtoupper('Запуск БП');
+        $generatedItem['NAME'] = mb_strtoupper(Loc::getMessage('AWZ_ADMIN_HELPER_GRID_ACTION_BP'));
         $generatedItem['VALUE'] = 'control_ef_bp';
         $generatedItem['ONCHANGE'] = [
             ['ACTION'=>'RESET_CONTROLS'],
@@ -320,7 +320,7 @@ class Helper {
             'TYPE'=>'BUTTON',
             'ID'=>'apply_button',
             'CLASS'=>'apply',
-            'TEXT'=>'Запустить',
+            'TEXT'=>Loc::getMessage('AWZ_ADMIN_HELPER_GRID_ACTION_BP_BTN'),
             'ONCHANGE'=>[
                 [
                     'ACTION'=>'CALLBACK',
