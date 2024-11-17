@@ -16,7 +16,6 @@ $MESS["AWZ_ADMIN_HELPER_COPY_ADD"] = "Добавление копий";
 $MESS["AWZ_ADMIN_HELPER_DELL_LABEL"] = "Удаление элемента";
 $MESS["AWZ_ADMIN_HELPER_EDIT_FIELD_LABEL"] = "Изменение поля";
 $MESS["AWZ_ADMIN_HELPER_PARAM_VAL"] = "Значение";
-$MESS["AWZ_ADMIN_HELPER_KONFL_MULTIPLE"] = "в одном из значений есть запятая";
 $MESS["AWZ_ADMIN_HELPER_PARAM_APPLY_CONFIRM"] = "Подтвердите действие для отмеченных элементов";
 $MESS["AWZ_ADMIN_HELPER_GRID_ERR"] = "Идентификатор грида не верный";
 $MESS["AWZ_ADMIN_HELPER_GRID_ERR_PARAM"] = "Параметры грида не найдены";
