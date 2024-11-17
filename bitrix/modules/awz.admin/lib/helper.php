@@ -126,6 +126,7 @@ class Helper {
                     $itmParams['grid'] = $adminCustom->getParam('TABLEID');
                     $checkGridName = true;
                 }
+                //echo'<pre>';print_r($itmParams['users']);echo'</pre>';
                 if(!$checkGridName) continue;
                 if(!in_array($checkAuthMember, $itmParams['users'])) continue;
 
@@ -242,7 +243,7 @@ class Helper {
                         [
                             'ACTION'=>'CALLBACK',
                             'DATA'=>[
-                                ['JS'=>"window.awz_helper.canselGroupActions()"]
+                                ['JS'=>"window.awz_nhelper.canselGroupActions()"]
                             ]
                         ]
                     ]
@@ -256,6 +257,126 @@ class Helper {
                 $arParams['ACTION_PANEL']['GROUPS'][0]['ITEMS'] = $tmp;
             }
         }
+    }
+
+    /**
+     * добавление действий БП
+     *
+     * @param $arParams параметры сущности грида
+     * @param $adminCustom
+     * @return void
+     */
+    public static function setBpActionParams(&$arParams, $adminCustom)
+    {
+        if(!isset($arParams['BP_ACTION'])) return;
+        if(empty($arParams['BP_ACTION'])) return;
+        $generatedItem = [];
+        $generatedItem['NAME'] = mb_strtoupper('Запуск БП');
+        $generatedItem['VALUE'] = 'control_ef_bp';
+        $generatedItem['ONCHANGE'] = [
+            ['ACTION'=>'RESET_CONTROLS'],
+            [
+                'ACTION'=>'CREATE',
+                'DATA'=>[]
+            ]
+        ];
+        $items = [];
+        foreach($arParams['BP_ACTION'] as $bp){
+            $items[] = [
+                'VALUE'=>$bp['ID'].',crm,CCrmDocumentLead,#ID#',
+                'NAME'=>$bp['NAME']
+            ];
+        }
+        $generatedItem['ONCHANGE'][1]['DATA'][] = [
+            'TYPE'=>'DROPDOWN',
+            'ID'=>'value_entry',
+            'NAME'=>'value_entry',
+            'CLASS'=>'apply',
+            'PLACEHOLDER'=>Loc::getMessage('AWZ_ADMIN_HELPER_QUANTS'),
+            'ONCHANGE'=>[
+                ['ACTION'=>'RESET_CONTROLS'],
+                [
+                    'ACTION'=>'CALLBACK',
+                    'DATA'=>[
+                        ['JS'=>""]
+                    ]
+                ]
+            ],
+            'ITEMS'=>$items
+        ];
+        $generatedItem['ONCHANGE'][1]['DATA'][] = [
+            'TYPE'=>'CHECKBOX',
+            'ID'=>'apply_button_for_all',
+            'TEXT'=>' '.Loc::getMessage('AWZ_ADMIN_HELPER_ALL_ID'),
+            'TITLE'=>' '.Loc::getMessage('AWZ_ADMIN_HELPER_ALL_ID'),
+            'LABEL'=>' '.Loc::getMessage('AWZ_ADMIN_HELPER_ALL_ID'),
+            'CLASS'=>'main-grid-panel-control',
+            'ONCHANGE'=>[
+                ['ACTION'=>'RESET_CONTROLS']
+            ]
+        ];
+
+        $generatedItem['ONCHANGE'][1]['DATA'][] = [
+            'TYPE'=>'BUTTON',
+            'ID'=>'apply_button',
+            'CLASS'=>'apply',
+            'TEXT'=>'Запустить',
+            'ONCHANGE'=>[
+                [
+                    'ACTION'=>'CALLBACK',
+                    'DATA'=>[
+                        ['JS'=>"window.awz_nhelper.applyGroupButton('ef_items_bp')"]
+                    ]
+                ]
+            ]
+        ];
+
+        $generatedItem['ONCHANGE'][1]['DATA'][] = [
+            'TYPE'=>'BUTTON',
+            'ID'=>'cansel_button',
+            'CLASS'=>'main-grid-buttons cancel',
+            'TEXT'=>Loc::getMessage('AWZ_ADMIN_HELPER_CHANSEL'),
+            'ONCHANGE'=>[
+                [
+                    'ACTION'=>'CALLBACK',
+                    'DATA'=>[
+                        ['JS'=>"window.awz_nhelper.canselGroupActions()"]
+                    ]
+                ]
+            ]
+        ];
+
+        $createItemAction = \Awz\Admin\Helper::getDefActionsList(
+            $arParams['ACTION_PANEL']['GROUPS'][0]['ITEMS']
+        );
+        $createItemAction['ITEMS'][] = $generatedItem;
+        \Awz\Admin\Helper::replaceDefActionsList(
+            $arParams['ACTION_PANEL']['GROUPS'][0]['ITEMS'],
+            $createItemAction
+        );
+
+        /*
+         * $generatedItem['ONCHANGE'][1]['DATA'][] = [
+                        'TYPE'=>'DROPDOWN',
+                        'ID'=>'value_entry_type',
+                        'NAME'=>'value_entry_type',
+                        'CLASS'=>'apply',
+                        'ONCHANGE'=>[
+                            ['ACTION'=>'RESET_CONTROLS'],
+                            [
+                                'ACTION'=>'CALLBACK',
+                                'DATA'=>[
+                                    ['JS'=>""]
+                                ]
+                            ]
+                        ],
+                        'ITEMS'=>[
+                            ['VALUE'=>'replace', 'NAME'=>Loc::getMessage('AWZ_ADMIN_HELPER_GRID_BTN_REPL')],
+                            ['VALUE'=>'add', 'NAME'=>Loc::getMessage('AWZ_ADMIN_HELPER_GRID_BTN_ADD')],
+                            ['VALUE'=>'remove', 'NAME'=>Loc::getMessage('AWZ_ADMIN_HELPER_GRID_BTN_DEL')],
+                        ]
+                    ];
+         * */
     }
 
     /**
@@ -317,7 +438,7 @@ class Helper {
                 [
                     'ACTION'=>'CALLBACK',
                     'DATA'=>[
-                        ['JS'=>"window.awz_helper.canselGroupActions()"]
+                        ['JS'=>"window.awz_nhelper.canselGroupActions()"]
                     ]
                 ]
             ]
@@ -406,7 +527,7 @@ class Helper {
                 [
                     'ACTION'=>'CALLBACK',
                     'DATA'=>[
-                        ['JS'=>"window.awz_helper.canselGroupActions()"]
+                        ['JS'=>"window.awz_nhelper.canselGroupActions()"]
                     ]
                 ]
             ]
@@ -461,7 +582,7 @@ class Helper {
                 [
                     'ACTION'=>'CALLBACK',
                     'DATA'=>[
-                        ['JS'=>"window.awz_helper.applyGroupButton('ef_items')"]
+                        ['JS'=>"window.awz_nhelper.applyGroupButton('ef_items')"]
                     ]
                 ]
             ]
@@ -475,7 +596,7 @@ class Helper {
                 [
                     'ACTION'=>'CALLBACK',
                     'DATA'=>[
-                        ['JS'=>"window.awz_helper.canselGroupActions()"]
+                        ['JS'=>"window.awz_nhelper.canselGroupActions()"]
                     ]
                 ]
             ]
@@ -877,7 +998,7 @@ class Helper {
                     [
                         'ACTION'=>'CALLBACK',
                         'DATA'=>[
-                            ['JS'=>"window.awz_helper.canselGroupActions()"]
+                            ['JS'=>"window.awz_nhelper.canselGroupActions()"]
                         ]
                     ]
                 ]
@@ -1623,7 +1744,7 @@ class Helper {
                     if(!empty($entityTempList)){
                         $crmEntityCodes = $entityTempList;
                     }
-                    if(count($entityTempList)==1 && ($fieldData['type'] != 'awzuientity')){
+                    if(count($entityTempList)==1){
                         $ht_temp = [];
                         $ht_tempIds = [];
                         if($fieldData['isMultiple']){
