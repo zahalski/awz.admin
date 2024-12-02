@@ -1,0 +1,2 @@
+<?php
+$MESS['AWZ_CONFIG_PERMISSION_SECTION_MODULE'] = 'Права доступа';
