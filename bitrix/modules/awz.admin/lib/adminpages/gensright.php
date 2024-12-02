@@ -52,6 +52,7 @@ class GensRight extends IForm implements IParams {
         $namespace = explode('.', $moduleName);
         $namespace = array_map(fn($el) => ucfirst(mb_strtolower($el)), $namespace);
         $namespaceClass = '\\'.implode("\\", $namespace).'\\Access\\Custom\\';
+        Loader::includeModule($moduleName);
         if(!class_exists($namespaceClass.'ComponentConfig')) return;
 
         $sectionsRefl = new ReflectionClass($namespaceClass.'ComponentConfig');
@@ -120,6 +121,7 @@ class GensRight extends IForm implements IParams {
                     }
                 }
                 $file->putContents(implode("\n", $contentArNew));
+
             }
 
         }
