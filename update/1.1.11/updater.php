@@ -40,10 +40,10 @@ if(IsModuleInstalled($moduleId)) {
 	$eventManager = \Bitrix\Main\EventManager::getInstance();
 	$eventManager->registerEventHandlerCompatible(
 		'main', 'OnAfterUserUpdate',
-		$this->MODULE_ID, '\\Awz\\Admin\\Access\\Handlers', 'OnAfterUserUpdate'
+		$moduleId, '\\Awz\\Admin\\Access\\Handlers', 'OnAfterUserUpdate'
 	);
 	$eventManager->registerEventHandlerCompatible(
 		'main', 'OnAfterUserAdd',
-		$this->MODULE_ID, '\\Awz\\Admin\\Access\\Handlers', 'OnAfterUserUpdate'
+		$moduleId, '\\Awz\\Admin\\Access\\Handlers', 'OnAfterUserUpdate'
 	);
 }
