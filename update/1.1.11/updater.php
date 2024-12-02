@@ -7,6 +7,12 @@ if(IsModuleInstalled($moduleId)) {
         true,
         true
     );
+	$updater->CopyFiles(
+        "install/admin",
+        "admin",
+        true,
+        true
+    );
 	$connection = \Bitrix\Main\Application::getConnection();
 	
     $sql = "CREATE TABLE IF NOT EXISTS awz_admin_role (
