@@ -129,7 +129,7 @@ class IForm {
 			$funcUpd = array($entity, 'update');
 		}
 
-		if($REQUEST_METHOD == "POST" && ($save!="" || $apply!="") && $POST_RIGHT=="W" && check_bitrix_sessid()){
+		if($REQUEST_METHOD == "POST" && ($save!="" || $apply!="") && check_bitrix_sessid()){
             //print_r([$REQUEST_METHOD, $save, $apply, $POST_RIGHT, check_bitrix_sessid()]);
 			$arData = array();
 			$error = false;

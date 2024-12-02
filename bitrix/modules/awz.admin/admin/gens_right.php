@@ -16,8 +16,6 @@ if(!Loader::includeModule($module_id)) return;
 
 if(!AccessController::can(0, ActionDictionary::ACTION_GENS_RIGHT))
     $APPLICATION->AuthForm(Loc::getMessage("ACCESS_DENIED"));
-global $POST_RIGHT;
-$POST_RIGHT = 'W';
 
 /* "Awz\Admin\AdminPages\PageItemEdit" replace generator */
 use Awz\Admin\AdminPages\GensRight as PageItemEdit;
