@@ -20,13 +20,16 @@ class Handlers {
             $userId = (int) $arFields["ID"];
             $sqlValues[] = '('.$userId.',\'group\',\'G'.$id.'\')';
         }
-        $sqlValues[] = '('.$userId.',\'user\',\'U'.$userId.'\')';
-        $sql = $helper->getInsertIgnore(
-            'b_user_access',
-            '(USER_ID, PROVIDER_ID, ACCESS_CODE)',
-            'VALUES '.implode(',', $sqlValues)
-        );
-        $connection->query($sql);
+        if($userId)
+            $sqlValues[] = '('.$userId.',\'user\',\'U'.$userId.'\')';
+        if(!empty($sqlValues)){
+            $sql = $helper->getInsertIgnore(
+                'b_user_access',
+                '(USER_ID, PROVIDER_ID, ACCESS_CODE)',
+                'VALUES '.implode(',', $sqlValues)
+            );
+            $connection->query($sql);
+        }
 
     }
 

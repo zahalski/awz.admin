@@ -665,7 +665,7 @@ class PublicList extends \CAdminUiList
         }
     }
 
-    public function DisplayFilter(array $findParams = array()){
+    public function DisplayFilter(array $findParams = [], array $filterParams = []){
 
         $filterSett = new FilterOptions($this->table_id);
         //$options = $filterSett->getOptions();
