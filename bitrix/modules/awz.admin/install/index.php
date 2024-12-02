@@ -47,6 +47,11 @@ class awz_admin extends CModule
 
         ModuleManager::RegisterModule($this->MODULE_ID);
 
+        $filePath = dirname(__DIR__ . '/../../options.php');
+        if(file_exists($filePath)){
+            LocalRedirect('/bitrix/admin/settings.php?lang='.LANG.'&mid='.$this->MODULE_ID.'&mid_menu=1');
+        }
+
         return true;
     }
 
@@ -77,6 +82,7 @@ class awz_admin extends CModule
     {
         global $DB, $DBType, $APPLICATION;
         $this->errors = false;
+        $this->errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT'] . "/bitrix/modules/". $this->MODULE_ID ."/install/db/".mb_strtolower($DB->type)."/access.sql");
         $this->errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT'] . "/bitrix/modules/". $this->MODULE_ID ."/install/db/".mb_strtolower($DB->type)."/install.sql");
         if (!$this->errors) {
             return true;
@@ -93,6 +99,7 @@ class awz_admin extends CModule
 
         $this->errors = false;
         $this->errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT'] . "/bitrix/modules/". $this->MODULE_ID ."/install/db/".mb_strtolower($DB->type)."/uninstall.sql");
+        $this->errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT'] . "/bitrix/modules/". $this->MODULE_ID ."/install/db/".mb_strtolower($DB->type)."/unaccess.sql");
         if (!$this->errors) {
             return true;
         }
@@ -104,11 +111,29 @@ class awz_admin extends CModule
 
     function InstallEvents()
     {
+        $eventManager = EventManager::getInstance();
+        $eventManager->registerEventHandlerCompatible(
+            'main', 'OnAfterUserUpdate',
+            $this->MODULE_ID, '\\Awz\\Admin\\Access\\Handlers', 'OnAfterUserUpdate'
+        );
+        $eventManager->registerEventHandlerCompatible(
+            'main', 'OnAfterUserAdd',
+            $this->MODULE_ID, '\\Awz\\Admin\\Access\\Handlers', 'OnAfterUserUpdate'
+        );
         return true;
     }
 
     function UnInstallEvents()
     {
+        $eventManager = EventManager::getInstance();
+        $eventManager->unRegisterEventHandler(
+            'sale', 'OnAfterUserUpdate',
+            $this->MODULE_ID, '\\Awz\\Admin\\Access\\Handlers', 'OnAfterUserUpdate'
+        );
+        $eventManager->unRegisterEventHandler(
+            'sale', 'OnAfterUserAdd',
+            $this->MODULE_ID, '\\Awz\\Admin\\Access\\Handlers', 'OnAfterUserUpdate'
+        );
         return true;
     }
 
@@ -117,6 +142,7 @@ class awz_admin extends CModule
         CopyDirFiles($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/".$this->MODULE_ID."/install/admin/", $_SERVER['DOCUMENT_ROOT']."/bitrix/admin/", true);
         CopyDirFiles($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/".$this->MODULE_ID."/install/components/awz/public.ui.filter/", $_SERVER['DOCUMENT_ROOT']."/bitrix/components/awz/public.ui.filter", true, true);
         CopyDirFiles($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/".$this->MODULE_ID."/install/components/awz/public.ui.grid/", $_SERVER['DOCUMENT_ROOT']."/bitrix/components/awz/public.ui.grid", true, true);
+        CopyDirFiles($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/".$this->MODULE_ID."/install/components/awz/admin.config.permissions/", $_SERVER['DOCUMENT_ROOT']."/bitrix/components/awz/admin.config.permissions", true, true);
         return true;
     }
 
@@ -124,6 +150,7 @@ class awz_admin extends CModule
     {
         DeleteDirFilesEx("/bitrix/components/awz/public.ui.filter");
         DeleteDirFilesEx("/bitrix/components/awz/public.ui.grid");
+        DeleteDirFilesEx("/bitrix/components/awz/admin.config.permissions");
         DeleteDirFiles(
             $_SERVER['DOCUMENT_ROOT']."/bitrix/modules/".$this->MODULE_ID."/install/admin",
             $_SERVER['DOCUMENT_ROOT']."/bitrix/admin"

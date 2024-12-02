@@ -448,7 +448,7 @@ class IForm {
                     "event" => $arField["NAME"],
                     "arResultDest" => array("ELEMENT_ID" => $arField["NAME"]),
                     "arPath" => array("PATH" => GetDirPath($this->getFieldValue($arField["NAME"]))),
-                    "select" => 'F',// F - file only, D - folder only
+                    "select" => $arField['SELECT'] ?? 'F',// F - file only, D - folder only
                     "operation" => 'O',// O - open, S - save
                     "showUploadTab" => true,
                     "showAddToMenuTab" => false,

@@ -14,18 +14,18 @@ Loc::loadMessages(__FILE__);
 if(!Loader::includeModule('awz.admin')) return;
 if(!Loader::includeModule($module_id)) return;
 
-if(!AccessController::can(0, ActionDictionary::ACTION_GENS_PAGE))
+if(!AccessController::can(0, ActionDictionary::ACTION_GENS_RIGHT))
     $APPLICATION->AuthForm(Loc::getMessage("ACCESS_DENIED"));
 
-/* "Awz\Admin\AdminPages\GensList" replace generator */
-use Awz\Admin\AdminPages\GensList as PageList;
+/* "Awz\Admin\AdminPages\PageItemEdit" replace generator */
+use Awz\Admin\AdminPages\GensRight as PageItemEdit;
 
-$APPLICATION->SetTitle(PageList::getTitle());
-$arParams = PageList::getParams();
+$APPLICATION->SetTitle(PageItemEdit::getTitle());
+$arParams = PageItemEdit::getParams();
 
-include($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/awz.admin/include/handler.php");
+include($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/awz.admin/include/handler_el.php");
 /* @var bool $customPrint */
 if(!$customPrint) {
-    $adminCustom = new PageList($arParams);
+    $adminCustom = new PageItemEdit($arParams);
     $adminCustom->defaultInterface();
 }
