@@ -44,7 +44,6 @@ class GensRight extends IForm implements IParams {
     }
 
     public function add(){
-
         $modulePath = self::checkPath();
         if(!$modulePath) return;
         $moduleNameAr = explode('/',$modulePath);
@@ -67,8 +66,8 @@ class GensRight extends IForm implements IParams {
         foreach($permsRefl->getConstants() as $permName=>$permValue){
             $allValues[] = $permValue;
         }
-
-        if($_REQUEST['NEW_SECTION']['CODE'] && $_REQUEST['NEW_SECTION']['NAME']){
+        global $APPLICATION;
+        if(is_array($_REQUEST['NEW_SECTION']) && $_REQUEST['NEW_SECTION']['CODE'] && $_REQUEST['NEW_SECTION']['NAME']){
             if($_REQUEST['NEW_SECTION']['CODE'] != mb_strtoupper(preg_replace('/([^A-Z])/','',$_REQUEST['NEW_SECTION']['CODE'])) || strlen($_REQUEST['NEW_SECTION']['CODE'])<3){
                 $this->addError(
                         new Error(
@@ -82,6 +81,7 @@ class GensRight extends IForm implements IParams {
             $fileLang = new File(str_replace('/lib/','/lang/ru/lib/',$modulePath).'/custom/componentconfig.php');
 
             $codesExists = [];
+
             if($file->isExists()){
                 $contentAr = explode("\n",$file->getContents());
 
@@ -121,10 +121,11 @@ class GensRight extends IForm implements IParams {
                     }
                 }
                 $file->putContents(implode("\n", $contentArNew));
-
+                \LocalRedirect($APPLICATION->getCurPage(false).'?lang=ru&FIELD_ENTITY='.$_REQUEST['FIELD_ENTITY'].'&is_redirect=1');
+                return;
             }
-
         }
+
         $actionsCodes = [];
         $permConsts = [];
         $langConsts = [];
@@ -285,8 +286,7 @@ class GensRight extends IForm implements IParams {
         }
 
         if($add){
-            global $APPLICATION;
-            LocalRedirect($APPLICATION->getCurPage(false).'?lang=ru&FIELD_ENTITY='.$_REQUEST['FIELD_ENTITY']);
+            \LocalRedirect($APPLICATION->getCurPage(false).'?lang=ru&FIELD_ENTITY='.$_REQUEST['FIELD_ENTITY'].'&is_redirect=1');
         }
     }
 
@@ -297,6 +297,13 @@ class GensRight extends IForm implements IParams {
         $modulePath = self::checkPath();
         $moduleNameAr = explode('/',$modulePath);
         $moduleName = $moduleNameAr[count($moduleNameAr)-3];
+
+        if($_REQUEST['is_redirect']){
+            global $APPLICATION;
+            sleep(3); //reflection cache
+            \LocalRedirect($APPLICATION->getCurPage(false).'?lang=ru&FIELD_ENTITY='.$_REQUEST['FIELD_ENTITY']);
+            return;
+        }
 
         if(!Loader::includeModule($moduleName)){
             ?>
@@ -461,6 +468,8 @@ class GensRight extends IForm implements IParams {
                 foreach(glob($toModulePath."/lib/access/*/*.php") as $filePath){
                     $files[] = $filePath;
                 }
+                @unlink($toModulePath."/lib/access/custom/rules/genspage.php");
+                @unlink($toModulePath."/lib/access/custom/rules/gensright.php");
                 foreach(glob($toModulePath."/lib/access/*/*/*.php") as $filePath){
                     $files[] = $filePath;
                 }

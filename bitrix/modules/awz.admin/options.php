@@ -19,15 +19,18 @@ $APPLICATION->SetTitle(Loc::getMessage('AWZ_ADMIN_OPT_TITLE'));
 
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_after.php");
 
+if($request->get('IFRAME_TYPE')==='SIDE_SLIDER'){
+    require_once('lib/access/include/moduleright.php');
+    CMain::finalActions();
+    die();
+}
+
 if ($request->getRequestMethod()==='POST' && AccessController::isEditSettings() && $request->get('Update'))
 {
     Option::set($module_id, "ACTIVE_GEN", $_REQUEST["ACTIVE_GEN"]=="Y" ? "Y" : "N", "");
 }
 ?>
-
-    <?if($request->get('IFRAME_TYPE')==='SIDE_SLIDER'){?>
-    <?require_once('lib/access/include/moduleright.php'); ?>
-    <?}else{
+<?
     $aTabs = array();
 
     $aTabs[] = array(
@@ -67,7 +70,7 @@ if ($request->getRequestMethod()==='POST' && AccessController::isEditSettings() 
         <?}?>
         <?$tabControl->End();?>
     </form>
-<?}?>
+
 
 
 <?
