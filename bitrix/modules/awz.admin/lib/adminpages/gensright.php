@@ -105,6 +105,8 @@ class GensRight extends IForm implements IParams {
                         foreach($sectionsRefl->getConstants() as $constName=>$constValue){
                             if(substr($constName,0,8)==='SECTION_' && !in_array($constValue, $codesExists)){
                                 $codesExists[] = $constValue;
+                                if(($moduleName != 'awz.admin') && ($constValue=='GENS'))
+                                    continue;
                                 $contentArNew[] = "\t".'protected const SECTION_'.$constValue.' = "'.$constValue.'";';
                             }
                         }
@@ -316,6 +318,21 @@ class GensRight extends IForm implements IParams {
             return;
         }
 
+        ?>
+
+        <div class="ui-alert ui-alert-success">
+            <span class="ui-alert-success">
+                <p>
+                <?=Loc::getMessage('AWZ_ADMIN_ADMINPAGES_GENRIGHT_DOC1')?> <?=$moduleName?> -
+                <a href="https://zahalski.dev/blog/cms-bitrix/rolesright/?ex=<?=$moduleName?>" target="_blank">
+                    <?=Loc::getMessage('AWZ_ADMIN_ADMINPAGES_GENRIGHT_DOC_LINK')?>
+                </a>
+            </p>
+            </span>
+        </div>
+
+        <?php
+
         $fileHelper = new File($modulePath.'/custom/helper.php');
         if($fileHelper->isExists() && mb_strpos($fileHelper->getContents(), 'const ADMIN_DECLINE')!==false){
 
@@ -398,9 +415,10 @@ class GensRight extends IForm implements IParams {
                     <td><input type="text" name="NEW_SECTION[NAME]" value="<?=\htmlspecialcharsEx($_REQUEST['NEW_SECTION']['NAME'])?>"></td>
                 </tr>
             </table>
-            <p>
 
-            </p>
+
+
+
             <?php
         }else{
 

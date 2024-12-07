@@ -33,6 +33,8 @@ class ComponentConfig extends ConfigPermissions
                         $allItems[$constValue][] = $permValue;
                     }
                 }
+                if(empty($allItems[$constValue]))
+                    unset($allItems[$constValue]);
             }
         }
         return $allItems;
