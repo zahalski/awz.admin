@@ -378,4 +378,101 @@ if(\Bitrix\Main\Loader::includeModule('awz.currency')){
 ### USD - 99.4215
 ```
 
+## 10. Структура
+
+## 10.1 Структура классов
+
+### Awz\Admin\Access
+
+| Класс            | Описание                                                      |
+|------------------|---------------------------------------------------------------|
+| Handlers         | Содержит обработчии (например расчет кодов прав)              |
+| AccessController | Контроллер для проверки прав доступа в своих модулях          |
+
+### Awz\Admin\Access\Tables
+
+Таблицы в базе данных
+
+| Класс             | Описание |
+|-------------------|----------|
+| PermissionTable   |          |
+| RoleTable         |          |
+| RoleRelationTable |          |
+
+### Awz\Admin\Access\Entity
+
+| Класс   | Описание |
+|---------|----------|
+| User    |          |
+
+### Awz\Admin\Access\Component
+
+| Класс                 | Описание |
+|-----------------------|----------|
+| ConfigPermissions     |          |
+
+### Awz\Admin\Access\EntitySelectors
+
+| Класс | Описание |
+|-------|----------|
+| Group |          |
+| User  |          |
+
+### Awz\Admin\Access\Model
+
+| Класс     | Описание |
+|-----------|----------|
+| BaseModel |          |
+| UserModel |          |
+
+### Awz\Admin\Access\Permission
+
+| Класс                | Описание |
+|----------------------|----------|
+| ActionDictionary     |          |
+| PermissionDictionary |          |
+| RoleDictionary       |          |
+| RoleUtil             |          |
+| RuleFactory          |          |
+
+### Awz\Admin\Access\Permission\Rules
+
+| Класс                  | Описание |
+|------------------------|----------|
+| RightEdit              |          |
+| RightView              |          |
+| SettEdit               |          |
+| SettView               |          |
+
+## 10.2. Структура - Классы для кастомизации
+
+### Awz\Admin\Access\Custom
+
+Справочники констант и логика для компонента управления прав
+
+| Класс                     | Описание |
+|---------------------------|----------|
+| ActionDictionary          |          |
+| ComponentConfig           |          |
+| Helper                    |          |
+| PermissionDictionary      |          |
+| RoleDictionary            |          |
+
+### Awz\Admin\Access\Custom\Rules
+
+Содержатся сгенерированные классы прав 
+
+| Класс          | Описание |
+|----------------|----------|
+| Example        |          |
+
+## 10.3. Структура - компонент сохранения прав
+
+/bitrix/modules/partner.module/install/components/module.config.permissions
+
+## 10.4. Структура - таблицы базы данных
+
+/bitrix/modules/partner.module/install/db/mysql/access.sql
+/bitrix/modules/partner.module/install/db/mysql/unaccess.sql
+
 <!-- ex3-end -->
