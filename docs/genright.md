@@ -31,11 +31,18 @@
 | Параметр           | Пример       | Описание                                                                              |
 |--------------------|--------------|---------------------------------------------------------------------------------------|
 | Константа          | VIEW_USD     | Большие латинские буквы                                                               |
-| Значение           | 4.1          | Цифры `4` или строки `4.1`  (1,2,3 - зарезервированы)                                 |
+| Значение           | 4            | Цифры `4` или строки `4.1`  (1,2,3 - зарезервированы)                                 |
 | Правило            | viewcurrency | Название класса с логикой проверки <br> будет сгенерирован в \lib\access\custom\rules |
 | Название настройки | Просмотр USD | Значение для языковой переменной                                                      |
 
+При использовании строк `4.1` должны быть уже заведены права со значением `4` и выше вложенных прав, 
+значение на скрине ниже неверные (в таком варианте получите исключение при сохранении прав)
+
 ![](https://zahalski.dev/images/modules/awz.admin/right/003.png)
+
+Верная настройка, ниже
+
+![](https://zahalski.dev/images/modules/awz.admin/right/006.png)
 
 ## 3. Добавляем настройки ui.entity-selector
 
@@ -73,7 +80,6 @@ return [
 ## 4. Добавляем таблицы для хранения прав в базу данных
 
 ```php
-
 $connection = \Bitrix\Main\Application::getConnection();
 	
 $sql = "CREATE TABLE IF NOT EXISTS partner_module_role (
@@ -103,17 +109,15 @@ INDEX ROLE_ID (ROLE_ID),
 INDEX PERMISSION_ID (PERMISSION_ID)
 );";
 $connection->queryExecute($sql);
-
 ```
 
 Пример добавления таблиц в /bitrix/modules/partner.module/install/index.php
 
 ```php
-
 function InstallDB()
 {
     global $DB, $DBType, $APPLICATION;
-    $filePath = $_SERVER['DOCUMENT_ROOT'] . "/bitrix/modules/partner.module/install/db/".mb_strtolower($DB->type)."/unaccess.sql";
+    $filePath = $_SERVER['DOCUMENT_ROOT'] . "/bitrix/modules/partner.module/install/db/".mb_strtolower($DB->type)."/access.sql";
     if(file_exists($filePath)) {
         $this->errors = $DB->RunSQLBatch($filePath);
     }
@@ -122,12 +126,11 @@ function InstallDB()
 function UnInstallDB()
 {
     global $DB, $DBType, $APPLICATION;
-    $filePath = $_SERVER['DOCUMENT_ROOT'] . "/bitrix/modules/partner.module/install/db/".mb_strtolower($DB->type)."/uninstall.sql";
+    $filePath = $_SERVER['DOCUMENT_ROOT'] . "/bitrix/modules/partner.module/install/db/".mb_strtolower($DB->type)."/unaccess.sql";
     if(file_exists($filePath)) {
         $this->errors = $DB->RunSQLBatch($filePath);
     }
 }
-
 ```
 
 ## 5. Добавляем обработчик для пересчета групп
@@ -143,13 +146,11 @@ $eventManager->registerEventHandlerCompatible(
     'main', 'OnAfterUserAdd',
     $moduleId, '\\Partner\\Module\\Access\\Handlers', 'OnAfterUserUpdate'
 );
-
 ```
 
 Пример добавления обработчиков в /bitrix/modules/partner.module/install/index.php
 
 ```php
-
 function InstallEvents()
 {
     $eventManager = \Bitrix\Main\EventManager::getInstance();
@@ -177,7 +178,6 @@ function UnInstallEvents()
     );
     return true;
 }
-
 ```
 
 ## 6. Добавляем компонент для установки прав
@@ -188,7 +188,6 @@ function UnInstallEvents()
 Пример копирования в /bitrix/modules/partner.module/install/index.php
 
 ```php
-
 function InstallFiles()
 {
     CopyDirFiles($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/partner.module/install/components/partner/module.config.permissions/", $_SERVER['DOCUMENT_ROOT']."/bitrix/components/awz/admin.config.permissions", true, true);
@@ -200,13 +199,11 @@ function UnInstallFiles()
     DeleteDirFilesEx("/bitrix/components/partner/module.config.permissions");
     return true;
 }
-
 ```
 
 ## 7. Пример общего updater.php для обновления модуля partner.module в маркетплейс
 
 ```php
-
 <?
 $moduleId = "partner.module";
 if(IsModuleInstalled($moduleId)) {
@@ -262,7 +259,6 @@ if(IsModuleInstalled($moduleId)) {
 		$moduleId, '\\Partner\\Module\\Access\\Handlers', 'OnAfterUserUpdate'
 	);
 }
-
 ```
 
 ## 8. Добавляем окно управления правами
@@ -311,6 +307,75 @@ if($request->get('IFRAME_TYPE')==='SIDE_SLIDER'){
 
 ### 8.3 Если все сделали правильно, то при нажатии на кнопку откроется слайдер с настройками прав
 
+![](https://zahalski.dev/images/modules/awz.admin/right/005.png)
 
+## 8.3.1 Создаем роль и сохраняем права
+
+![](https://zahalski.dev/images/modules/awz.admin/right/007.png)
+
+## 8.3.2 Добавим дополнительной логики в класс проверки
+
+/bitrix/modules/partner.module/lib/access/custom/rules/viewcurrency.php
+
+Стандартный класс, сгенерированный модулем уже проверяет по первому добавленному (пункт 2.3)
+
+```php
+class Viewcurrency extends \Bitrix\Main\Access\Rule\AbstractRule
+{
+    public function execute(AccessibleItem $item = null, $params = null): bool
+    {
+        if ($this->user->isAdmin() && !Helper::ADMIN_DECLINE)
+        {
+            return true;
+        }
+        if ($this->user->getPermission(PermissionDictionary::VIEW_EUR))
+        {
+            return true;
+        }
+        return false;
+    }
+}
+```
+
+Добавим проверку по кодам валют
+
+```php
+class Viewcurrency extends \Bitrix\Main\Access\Rule\AbstractRule
+{
+    public function execute(AccessibleItem $item = null, $params = null): bool
+    {
+        if ($this->user->isAdmin() && !Helper::ADMIN_DECLINE)
+            return true;
+        if ($this->user->getPermission(PermissionDictionary::VIEW_ALL))
+            return true;
+        if($params == 'USD' && $this->user->getPermission(PermissionDictionary::VIEW_USD))
+            return true;
+        if($params == 'EUR' && $this->user->getPermission(PermissionDictionary::VIEW_EUR))
+            return true;
+        return false;
+    }
+}
+```
+
+## 8.3.3 Проверка прав доступа в модулях
+
+```php
+use Awz\Currency\Access\AccessController;
+use Awz\Currency\Access\Custom\ActionDictionary;
+if(\Bitrix\Main\Loader::includeModule('awz.currency')){
+
+	$res = \Awz\Currency\CursTable::getCurs(date('d.m.Y'));
+	echo 'count all: '.count($res)."\n";
+	foreach($res as $code=>$value){
+        if(AccessController::can(0,ActionDictionary::ACTION_VIEW_ALL, false, $code)){
+            echo $code.' - '.$value['AMOUNT']."\n";
+        }
+	}
+
+}
+### Результат выполнения команды
+### count all: 4
+### USD - 99.4215
+```
 
 <!-- ex3-end -->
