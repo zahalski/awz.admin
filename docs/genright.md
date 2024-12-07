@@ -39,7 +39,9 @@
 
 ## 3. Добавляем настройки ui.entity-selector
 
-добавляем опции в файл /modules/partner.module/.settings.php (создаем если файла нет)
+В ядре стандартно нет возможности искать по всем пользователям и группам, поэтому пишем свои селекторы выбора
+
+Добавляем опции в файл /bitrix/modules/partner.module/.settings.php (создаем если файла нет)
 
 ```php
 <?php
@@ -68,20 +70,215 @@ return [
 ];
 ```
 
-## 4. Добавляем окно управления правами
+## 4. Добавляем таблицы для хранения прав в базу данных
 
-в /modules/partner.module/options.php
+```php
 
-### 4.1. Выводим кнопку открытия управления прав доступа в слайдере
+$connection = \Bitrix\Main\Application::getConnection();
+	
+$sql = "CREATE TABLE IF NOT EXISTS partner_module_role (
+ID INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+NAME VARCHAR(250) NOT NULL,
+PRIMARY KEY (ID)
+);";
+$connection->queryExecute($sql);
 
-#### 4.1.1 Подключаем ui.sidepanel-content
+$sql = "CREATE TABLE IF NOT EXISTS partner_module_role_relation (
+ID INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+ROLE_ID INT(10) UNSIGNED NOT NULL,
+RELATION VARCHAR(8) NOT NULL DEFAULT '',
+PRIMARY KEY (ID),
+INDEX ROLE_ID (ROLE_ID),
+INDEX RELATION (RELATION)
+);";
+$connection->queryExecute($sql);
+
+$sql = "CREATE TABLE IF NOT EXISTS partner_module_permission (
+ID INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+ROLE_ID INT(10) UNSIGNED NOT NULL,
+PERMISSION_ID VARCHAR(32) NOT NULL DEFAULT '0',
+VALUE TINYINT(3) UNSIGNED NOT NULL DEFAULT '0',
+PRIMARY KEY (ID),
+INDEX ROLE_ID (ROLE_ID),
+INDEX PERMISSION_ID (PERMISSION_ID)
+);";
+$connection->queryExecute($sql);
+
+```
+
+Пример добавления таблиц в /bitrix/modules/partner.module/install/index.php
+
+```php
+
+function InstallDB()
+{
+    global $DB, $DBType, $APPLICATION;
+    $filePath = $_SERVER['DOCUMENT_ROOT'] . "/bitrix/modules/partner.module/install/db/".mb_strtolower($DB->type)."/unaccess.sql";
+    if(file_exists($filePath)) {
+        $this->errors = $DB->RunSQLBatch($filePath);
+    }
+}
+
+function UnInstallDB()
+{
+    global $DB, $DBType, $APPLICATION;
+    $filePath = $_SERVER['DOCUMENT_ROOT'] . "/bitrix/modules/partner.module/install/db/".mb_strtolower($DB->type)."/uninstall.sql";
+    if(file_exists($filePath)) {
+        $this->errors = $DB->RunSQLBatch($filePath);
+    }
+}
+
+```
+
+## 5. Добавляем обработчик для пересчета групп
+
+```php
+$moduleId = 'partner.module';
+$eventManager = \Bitrix\Main\EventManager::getInstance();
+$eventManager->registerEventHandlerCompatible(
+    'main', 'OnAfterUserUpdate',
+    $moduleId, '\\Partner\\Module\\Access\\Handlers', 'OnAfterUserUpdate'
+);
+$eventManager->registerEventHandlerCompatible(
+    'main', 'OnAfterUserAdd',
+    $moduleId, '\\Partner\\Module\\Access\\Handlers', 'OnAfterUserUpdate'
+);
+
+```
+
+Пример добавления обработчиков в /bitrix/modules/partner.module/install/index.php
+
+```php
+
+function InstallEvents()
+{
+    $eventManager = \Bitrix\Main\EventManager::getInstance();
+    $eventManager->registerEventHandlerCompatible(
+        'main', 'OnAfterUserUpdate',
+        'partner.module', '\\Partner\\Module\\Access\\Handlers', 'OnAfterUserUpdate'
+    );
+    $eventManager->registerEventHandlerCompatible(
+        'main', 'OnAfterUserAdd',
+        'partner.module', '\\Partner\\Module\\Access\\Handlers', 'OnAfterUserUpdate'
+    );
+    return true;
+}
+
+function UnInstallEvents()
+{
+    $eventManager = EventManager::getInstance();
+    $eventManager->unRegisterEventHandler(
+        'sale', 'OnAfterUserUpdate',
+        'partner.module', '\\Partner\\Module\\Access\\Handlers', 'OnAfterUserUpdate'
+    );
+    $eventManager->unRegisterEventHandler(
+        'sale', 'OnAfterUserAdd',
+        'partner.module', '\\Partner\\Module\\Access\\Handlers', 'OnAfterUserUpdate'
+    );
+    return true;
+}
+
+```
+
+## 6. Добавляем компонент для установки прав
+
+копируем `/bitrix/modules/partner.module/install/components/module.config.permissions` в 
+`/bitrix/components/partner/module.config.permissions`
+
+Пример копирования в /bitrix/modules/partner.module/install/index.php
+
+```php
+
+function InstallFiles()
+{
+    CopyDirFiles($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/partner.module/install/components/partner/module.config.permissions/", $_SERVER['DOCUMENT_ROOT']."/bitrix/components/awz/admin.config.permissions", true, true);
+    return true;
+}
+
+function UnInstallFiles()
+{
+    DeleteDirFilesEx("/bitrix/components/partner/module.config.permissions");
+    return true;
+}
+
+```
+
+## 7. Пример общего updater.php для обновления модуля partner.module в маркетплейс
+
+```php
+
+<?
+$moduleId = "partner.module";
+if(IsModuleInstalled($moduleId)) {
+    $updater->CopyFiles(
+        "install/components/partner/module.config.permissions",
+        "components/partner/module.config.permissions",
+        true,
+        true
+    );
+	$updater->CopyFiles(
+        "install/admin",
+        "admin",
+        true,
+        true
+    );
+	$connection = \Bitrix\Main\Application::getConnection();
+	
+    $sql = "CREATE TABLE IF NOT EXISTS partner_module_role (
+    ID INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+    NAME VARCHAR(250) NOT NULL,
+    PRIMARY KEY (ID)
+    );";
+	$connection->queryExecute($sql);
+	
+	$sql = "CREATE TABLE IF NOT EXISTS partner_module_role_relation (
+    ID INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+    ROLE_ID INT(10) UNSIGNED NOT NULL,
+    RELATION VARCHAR(8) NOT NULL DEFAULT '',
+    PRIMARY KEY (ID),
+    INDEX ROLE_ID (ROLE_ID),
+    INDEX RELATION (RELATION)
+    );";
+	$connection->queryExecute($sql);
+	
+	$sql = "CREATE TABLE IF NOT EXISTS partner_module_permission (
+    ID INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+    ROLE_ID INT(10) UNSIGNED NOT NULL,
+    PERMISSION_ID VARCHAR(32) NOT NULL DEFAULT '0',
+    VALUE TINYINT(3) UNSIGNED NOT NULL DEFAULT '0',
+    PRIMARY KEY (ID),
+    INDEX ROLE_ID (ROLE_ID),
+    INDEX PERMISSION_ID (PERMISSION_ID)
+    );";
+	$connection->queryExecute($sql);
+	
+	$eventManager = \Bitrix\Main\EventManager::getInstance();
+	$eventManager->registerEventHandlerCompatible(
+		'main', 'OnAfterUserUpdate',
+		$moduleId, '\\Partner\\Module\\Access\\Handlers', 'OnAfterUserUpdate'
+	);
+	$eventManager->registerEventHandlerCompatible(
+		'main', 'OnAfterUserAdd',
+		$moduleId, '\\Partner\\Module\\Access\\Handlers', 'OnAfterUserUpdate'
+	);
+}
+
+```
+
+## 8. Добавляем окно управления правами
+
+в /bitrix/modules/partner.module/options.php
+
+### 8.1. Выводим кнопку открытия управления прав доступа в слайдере
+
+#### 8.1.1 Подключаем ui.sidepanel-content
 
 ```php
 use Bitrix\Main\UI\Extension;
 Extension::load('ui.sidepanel-content');
 ```
 
-#### 4.1.1 Код вывода кнопки
+#### 8.1.1 Код вывода кнопки
 
 ```php
 use Partner\Module\Access\AccessController;
@@ -96,7 +293,7 @@ if(AccessController::isViewRight()){?>
 <?}?>
 ```
 
-### 4.2 Логика вывода окна прав в слайдер
+### 8.2 Логика вывода окна прав в слайдер
 
 ```php
 use Bitrix\Main\Application;
@@ -112,7 +309,7 @@ if($request->get('IFRAME_TYPE')==='SIDE_SLIDER'){
 }
 ```
 
-### 4.3 Если все сделали правильно, то при нажатии на кнопку откроется слайдер с настройками прав
+### 8.3 Если все сделали правильно, то при нажатии на кнопку откроется слайдер с настройками прав
 
 
 
