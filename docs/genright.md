@@ -472,7 +472,7 @@ if(\Bitrix\Main\Loader::includeModule('awz.currency')){
 
 ## 10.4. Структура - таблицы базы данных
 
-/bitrix/modules/partner.module/install/db/mysql/access.sql
+/bitrix/modules/partner.module/install/db/mysql/access.sql<br>
 /bitrix/modules/partner.module/install/db/mysql/unaccess.sql
 
 <!-- ex3-end -->
