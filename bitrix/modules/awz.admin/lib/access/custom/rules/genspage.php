@@ -10,7 +10,7 @@ class Genspage extends \Bitrix\Main\Access\Rule\AbstractRule
 
     public function execute(AccessibleItem $item = null, $params = null): bool
     {
-        if ($this->user->isAdmin() && !Helper::ADMIN_DECLINE)
+        if ($this->user->isAdmin())
         {
             return true;
         }
