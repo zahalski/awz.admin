@@ -378,6 +378,24 @@ if(\Bitrix\Main\Loader::includeModule('awz.currency')){
 ### USD - 99.4215
 ```
 
+```php
+#Вместо (старый вариант)
+use Bitrix\Main\Loader;
+$module_id = "partner.module";
+Loader::includeModule($module_id);
+$MODULE_RIGHT = $APPLICATION->GetGroupRight($module_id);
+if (! ($MODULE_RIGHT >= "R"))
+    $APPLICATION->AuthForm(Loc::getMessage("ACCESS_DENIED"));
+    
+#Новый вариант
+use Bitrix\Main\Loader;
+use Awz\Currency\Access\AccessController;
+$module_id = "partner.module";
+Loader::includeModule($module_id);
+if(!AccessController::isViewSettings())
+    $APPLICATION->AuthForm(Loc::getMessage("ACCESS_DENIED"));
+```
+
 ## 10. Структура
 
 ## 10.1 Структура классов
