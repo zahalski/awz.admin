@@ -708,7 +708,7 @@ class partner_module extends CModule
 
     function UnInstallFiles()
     {
-        DeleteDirFilesEx("/bitrix/components/awz/admin.config.permissions");
+        DeleteDirFilesEx("/bitrix/components/partner/module.config.permissions");
         DeleteDirFiles(
             $_SERVER['DOCUMENT_ROOT']."/bitrix/modules/".$this->MODULE_ID."/install/admin",
             $_SERVER['DOCUMENT_ROOT']."/bitrix/admin"
