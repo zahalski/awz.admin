@@ -929,18 +929,18 @@ if(AccessController::isViewSettings() || AccessController::isViewRight()){
     $level2 = [];
     if(AccessController::isViewSettings()){
         $level2[] = [
-            "text" => "Общие настройки",
+            "text" => Loc::getMessage('AWZ_ADMIN_MENU_NAME_SETT_1'),
             "url" => "settings.php?lang=".LANGUAGE_ID.'&mid='.$module_id.'&mid_menu=1'
         ];
     }
     if(AccessController::isViewRight()){
         $level2[] = [
-            "text" => "Права доступа",
+            "text" => Loc::getMessage('AWZ_ADMIN_MENU_NAME_SETT_2'),
             "url" => "javascript:BX.SidePanel.Instance.open('/bitrix/admin/settings.php?mid=".$module_id."&lang=".LANGUAGE_ID."&mid_menu=1');"
         ];
     }
     $items[] = [
-        "text" => "Настройки модуля",
+        "text" => Loc::getMessage('AWZ_ADMIN_MENU_NAME_SETT'),
         "items_id" => str_replace('.','_',$module_id).'_sett',
         "items"=>$level2
     ];
