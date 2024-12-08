@@ -395,6 +395,34 @@ Loader::includeModule($module_id);
 if(!AccessController::isViewSettings())
     $APPLICATION->AuthForm(Loc::getMessage("ACCESS_DENIED"));
 ```
+Добавление ссылок на настройки в меню модуля `admin/menu.php`
+```php
+use Awz\Currency\Access\AccessController;
+use Bitrix\Main\Loader;
+$module_id = "partner.module";
+if(!Loader::includeModule($module_id)) return;
+if(AccessController::isViewSettings() || AccessController::isViewRight()){
+    $level2 = [];
+    if(AccessController::isViewSettings()){
+        $level2[] = [
+            "text" => "Общие настройки",
+            "url" => "settings.php?lang=".LANGUAGE_ID.'&mid='.$module_id.'&mid_menu=1'
+        ];
+    }
+    if(AccessController::isViewRight()){
+        $level2[] = [
+            "text" => "Права доступа",
+            "url" => "javascript:BX.SidePanel.Instance.open('/bitrix/admin/settings.php?mid=".$module_id."&lang=".LANGUAGE_ID."&mid_menu=1');"
+        ];
+    }
+    $items[] = [
+        "text" => "Настройки модуля",
+        "items_id" => str_replace('.','_',$module_id).'_sett',
+        "items"=>$level2
+    ];
+}
+```
+
 
 ## 10. Структура
 
