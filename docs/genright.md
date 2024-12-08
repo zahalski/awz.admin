@@ -912,6 +912,8 @@ $MESS["AWZ_ADMIN_MENU_NAME_SETT_1"] = "Общие настройки";
 $MESS["AWZ_ADMIN_MENU_NAME_SETT_2"] = "Права доступа";
 ```
 
+/bitrix/modules/partner.module/admin/menu.php
+
 ```php
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Loader;
