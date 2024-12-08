@@ -1,0 +1,3 @@
+- рефакторинг;
+- добавлена поддержка PostgreSQL;
+- update docs/genright.md.
