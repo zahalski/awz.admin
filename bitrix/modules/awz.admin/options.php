@@ -9,21 +9,22 @@ Loc::loadMessages(__FILE__);
 
 global $APPLICATION;
 $module_id = "awz.admin";
-Loader::includeModule($module_id);
-if(!AccessController::isViewSettings())
-    $APPLICATION->AuthForm(Loc::getMessage("ACCESS_DENIED"));
-$request = Application::getInstance()->getContext()->getRequest();
+if(!Loader::includeModule($module_id)) return;
 Extension::load('ui.sidepanel-content');
-
+$request = Application::getInstance()->getContext()->getRequest();
 $APPLICATION->SetTitle(Loc::getMessage('AWZ_ADMIN_OPT_TITLE'));
 
-require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_after.php");
-
 if($request->get('IFRAME_TYPE')==='SIDE_SLIDER'){
+    require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_after.php");
     require_once('lib/access/include/moduleright.php');
     CMain::finalActions();
     die();
 }
+
+if(!AccessController::isViewSettings())
+    $APPLICATION->AuthForm(Loc::getMessage("ACCESS_DENIED"));
+require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_after.php");
+$saveUrl = $APPLICATION->GetCurPage(false).'?mid='.htmlspecialcharsbx($module_id).'&lang='.LANGUAGE_ID.'&mid_menu=1';
 
 if ($request->getRequestMethod()==='POST' && AccessController::isEditSettings() && $request->get('Update'))
 {
@@ -39,11 +40,12 @@ if ($request->getRequestMethod()==='POST' && AccessController::isEditSettings() 
         "ICON" => "vote_settings",
         "TITLE" => Loc::getMessage('AWZ_ADMIN_OPT_SECT1')
     );
+
     $tabControl = new CAdminTabControl("tabControl", $aTabs);
     $tabControl->Begin();
         ?>
     <style>.adm-workarea option:checked {background-color: rgb(206, 206, 206);}</style>
-    <form method="POST" action="<?echo $APPLICATION->GetCurPage()?>?mid=<?=htmlspecialcharsbx($module_id)?>&lang=<?=LANGUAGE_ID?>&mid_menu=1" id="FORMACTION">
+    <form method="POST" action="<?=$saveUrl?>" id="FORMACTION">
         <?
         $tabControl->BeginNextTab();
         ?>
@@ -64,7 +66,7 @@ if ($request->getRequestMethod()==='POST' && AccessController::isEditSettings() 
         <input <?if (!AccessController::isEditSettings()) echo "disabled" ?> type="submit" class="adm-btn-green" name="Update" value="<?=Loc::getMessage('AWZ_ADMIN_OPT_L_BTN_SAVE')?>" />
         <input type="hidden" name="Update" value="Y" />
         <?if(AccessController::isViewRight()){?>
-            <button class="adm-header-btn adm-security-btn" onclick="BX.SidePanel.Instance.open('<?echo $APPLICATION->GetCurPage()?>?mid=<?=htmlspecialcharsbx($module_id)?>&lang=<?=LANGUAGE_ID?>&mid_menu=1');return false;">
+            <button class="adm-header-btn adm-security-btn" onclick="BX.SidePanel.Instance.open('<?=$saveUrl?>');return false;">
                 <?=Loc::getMessage('AWZ_ADMIN_OPT_SECT3')?>
             </button>
         <?}?>
