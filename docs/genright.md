@@ -117,18 +117,23 @@ $connection->queryExecute($sql);
 function InstallDB()
 {
     global $DB, $DBType, $APPLICATION;
-    $filePath = $_SERVER['DOCUMENT_ROOT'] . "/bitrix/modules/partner.module/install/db/".mb_strtolower($DB->type)."/access.sql";
-    if(file_exists($filePath)) {
-        $this->errors = $DB->RunSQLBatch($filePath);
+    if(!$this->errors){
+        $filePath = $_SERVER['DOCUMENT_ROOT'] . "/bitrix/modules/".$this->MODULE_ID."/install/db/".mb_strtolower($DB->type)."/access.sql";
+        if(file_exists($filePath)) {
+            $this->errors = $DB->RunSQLBatch($filePath);
+        }
     }
+   
 }
 
 function UnInstallDB()
 {
     global $DB, $DBType, $APPLICATION;
-    $filePath = $_SERVER['DOCUMENT_ROOT'] . "/bitrix/modules/partner.module/install/db/".mb_strtolower($DB->type)."/unaccess.sql";
-    if(file_exists($filePath)) {
-        $this->errors = $DB->RunSQLBatch($filePath);
+    if(!$this->errors){
+        $filePath = $_SERVER['DOCUMENT_ROOT'] . "/bitrix/modules/".$this->MODULE_ID."/install/db/".mb_strtolower($DB->type)."/unaccess.sql";
+        if(file_exists($filePath)) {
+            $this->errors = $DB->RunSQLBatch($filePath);
+        }
     }
 }
 ```
@@ -151,16 +156,18 @@ $eventManager->registerEventHandlerCompatible(
 Пример добавления обработчиков в /bitrix/modules/partner.module/install/index.php
 
 ```php
+use \Bitrix\Main\EventManager;
+
 function InstallEvents()
 {
-    $eventManager = \Bitrix\Main\EventManager::getInstance();
+    $eventManager = EventManager::getInstance();
     $eventManager->registerEventHandlerCompatible(
         'main', 'OnAfterUserUpdate',
-        'partner.module', '\\Partner\\Module\\Access\\Handlers', 'OnAfterUserUpdate'
+        $this->MODULE_ID, '\\Partner\\Module\\Access\\Handlers', 'OnAfterUserUpdate'
     );
     $eventManager->registerEventHandlerCompatible(
         'main', 'OnAfterUserAdd',
-        'partner.module', '\\Partner\\Module\\Access\\Handlers', 'OnAfterUserUpdate'
+        $this->MODULE_ID, '\\Partner\\Module\\Access\\Handlers', 'OnAfterUserUpdate'
     );
     return true;
 }
@@ -170,11 +177,11 @@ function UnInstallEvents()
     $eventManager = EventManager::getInstance();
     $eventManager->unRegisterEventHandler(
         'sale', 'OnAfterUserUpdate',
-        'partner.module', '\\Partner\\Module\\Access\\Handlers', 'OnAfterUserUpdate'
+        $this->MODULE_ID, '\\Partner\\Module\\Access\\Handlers', 'OnAfterUserUpdate'
     );
     $eventManager->unRegisterEventHandler(
         'sale', 'OnAfterUserAdd',
-        'partner.module', '\\Partner\\Module\\Access\\Handlers', 'OnAfterUserUpdate'
+        $this->MODULE_ID, '\\Partner\\Module\\Access\\Handlers', 'OnAfterUserUpdate'
     );
     return true;
 }
@@ -190,7 +197,7 @@ function UnInstallEvents()
 ```php
 function InstallFiles()
 {
-    CopyDirFiles($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/partner.module/install/components/partner/module.config.permissions/", $_SERVER['DOCUMENT_ROOT']."/bitrix/components/awz/admin.config.permissions", true, true);
+    CopyDirFiles($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/".$this->MODULE_ID."/install/components/partner/module.config.permissions/", $_SERVER['DOCUMENT_ROOT']."/bitrix/components/awz/admin.config.permissions", true, true);
     return true;
 }
 
