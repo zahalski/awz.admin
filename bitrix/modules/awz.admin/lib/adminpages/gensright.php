@@ -474,10 +474,22 @@ class GensRight extends IForm implements IParams {
                     $toModulePath."/install/db/mysql/unaccess.sql",
                     true, true
                 );
+                \CopyDirFiles(
+                    $fromModulePath."/install/db/pgsql/access.sql",
+                    $toModulePath."/install/db/pgsql/access.sql",
+                    true, true
+                );
+                \CopyDirFiles(
+                    $fromModulePath."/install/db/pgsql/unaccess.sql",
+                    $toModulePath."/install/db/pgsql/unaccess.sql",
+                    true, true
+                );
 
                 $files = [
                     $toModulePath."/install/db/mysql/access.sql",
+                    $toModulePath."/install/db/pgsql/access.sql",
                     $toModulePath."/install/db/mysql/unaccess.sql",
+                    $toModulePath."/install/db/pgsql/unaccess.sql",
                     $toModulePath."/install/components/".$moduleNameNSAr[1].'.config.permissions/ajax.php'
                 ];
                 foreach(glob($toModulePath."/lib/access/*.php") as $filePath){
