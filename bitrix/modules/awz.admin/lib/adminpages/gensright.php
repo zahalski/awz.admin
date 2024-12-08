@@ -460,6 +460,11 @@ class GensRight extends IForm implements IParams {
                     true, true
                 );
                 \CopyDirFiles(
+                    $fromModulePath."/install/custom/",
+                    $toModulePath."/lib/access/custom/",
+                    true, true
+                );
+                \CopyDirFiles(
                     $fromModulePath."/install/components/awz/admin.config.permissions",
                     $toModulePath."/install/components/".$moduleNameNSAr[1].'.config.permissions',
                     true, true
@@ -519,7 +524,7 @@ class GensRight extends IForm implements IParams {
                             $moduleName,
                             implode('_',$moduleNameNSAr).'_',
                             implode('',$moduleNameNSAr).'-',
-                            implode(':',$moduleNameNSAr),
+                            implode(':',$moduleNameNSAr)
                         ],
                         $fileOb->getContents()
                     ));
