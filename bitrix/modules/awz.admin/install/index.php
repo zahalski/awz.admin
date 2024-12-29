@@ -47,9 +47,9 @@ class awz_admin extends CModule
 
         ModuleManager::RegisterModule($this->MODULE_ID);
 
-        $filePath = dirname(__DIR__ . '/../../options.php');
+        $filePath = dirname(__DIR__) . '/options.php';
         if(file_exists($filePath)){
-            LocalRedirect('/bitrix/admin/settings.php?lang='.LANG.'&mid='.$this->MODULE_ID.'&mid_menu=1');
+            LocalRedirect('/bitrix/admin/settings.php?lang='.LANG.'&mid='.$this->MODULE_ID);
         }
 
         return true;
